@@ -152,24 +152,5 @@ export const staticRoutes: Array<RouteRecordRaw> = [
 			title: '登录',
 		},
 	},
-	/**
-	 * 提示：写在这里的为全屏界面，不建议写在这里
-	 * 请写在 `dynamicRoutes` 路由数组中
-	 */
-	{
-		path: '/visualizingDemo1',
-		name: 'visualizingDemo1',
-		component: () => import('/@/views/visualizing/demo1.vue'),
-		meta: {
-			title: 'message.router.visualizingLinkDemo1',
-		},
-	},
-	{
-		path: '/visualizingDemo2',
-		name: 'visualizingDemo2',
-		component: () => import('/@/views/visualizing/demo2.vue'),
-		meta: {
-			title: 'message.router.visualizingLinkDemo2',
-		},
-	},
+
 ];

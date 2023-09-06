@@ -89,7 +89,6 @@ import mittBus from '/@/utils/mitt';
 import { Session, Local } from '/@/utils/storage';
 
 // 引入组件
-const UserNews = defineAsyncComponent(() => import('/@/layout/navBars/topBar/userNews.vue'));
 const Search = defineAsyncComponent(() => import('/@/layout/navBars/topBar/search.vue'));
 
 // 定义变量内容
@@ -234,7 +233,7 @@ onMounted(() => {
 		height: 50px;
 		line-height: 50px;
 		display: flex;
-		align-items: center; 
+		align-items: center;
 		&:hover {
 			background: var(--next-color-user-hover);
 			i {
