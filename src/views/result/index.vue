@@ -1,0 +1,3 @@
+<template>
+    result
+</template>
