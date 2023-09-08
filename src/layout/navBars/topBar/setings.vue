@@ -255,12 +255,12 @@
 						<el-switch v-model="getThemeConfig.isShareTagsView" size="small" @change="onShareTagsViewChange"></el-switch>
 					</div>
 				</div>
-				<div class="layout-breadcrumb-seting-bar-flex mt15">
+				<!-- <div class="layout-breadcrumb-seting-bar-flex mt15">
 					<div class="layout-breadcrumb-seting-bar-flex-label">{{ $t('message.layout.fourIsFooter') }}</div>
 					<div class="layout-breadcrumb-seting-bar-flex-value">
 						<el-switch v-model="getThemeConfig.isFooter" size="small" @change="setLocalThemeConfig"></el-switch>
 					</div>
-				</div>
+				</div> -->
 				<div class="layout-breadcrumb-seting-bar-flex mt15">
 					<div class="layout-breadcrumb-seting-bar-flex-label">{{ $t('message.layout.fourIsGrayscale') }}</div>
 					<div class="layout-breadcrumb-seting-bar-flex-value">
@@ -273,7 +273,7 @@
 						<el-switch v-model="getThemeConfig.isInvert" size="small" @change="onAddFilterChange('invert')"></el-switch>
 					</div>
 				</div>
-				<div class="layout-breadcrumb-seting-bar-flex mt15">
+				<!-- <div class="layout-breadcrumb-seting-bar-flex mt15">
 					<div class="layout-breadcrumb-seting-bar-flex-label">{{ $t('message.layout.fourIsWartermark') }}</div>
 					<div class="layout-breadcrumb-seting-bar-flex-value">
 						<el-switch v-model="getThemeConfig.isWartermark" size="small" @change="onWartermarkChange"></el-switch>
@@ -284,7 +284,7 @@
 					<div class="layout-breadcrumb-seting-bar-flex-value">
 						<el-input v-model="getThemeConfig.wartermarkText" size="default" style="width: 90px" @input="onWartermarkTextInput"></el-input>
 					</div>
-				</div>
+				</div> -->
 
 				<!-- 其它设置 -->
 				<el-divider content-position="left">{{ $t('message.layout.fiveTitle') }}</el-divider>

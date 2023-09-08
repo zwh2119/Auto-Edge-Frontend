@@ -76,8 +76,6 @@ declare interface ThemeConfigState {
 		isGrayscale: boolean;
 		isInvert: boolean;
 		isIsDark: boolean;
-		isWartermark: boolean;
-		wartermarkText: string;
 		tagsStyle: string;
 		animation: string;
 		columnsAsideStyle: string;
