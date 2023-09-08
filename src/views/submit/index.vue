@@ -38,9 +38,13 @@
               <el-carousel-item v-for="(value, node_addr, index) in info" :key="index">
                 <div class="carousel-item-content">
                   <div class="horizontal-scroll-container">
-                    <div v-for="(v, video_id) in value" class="available-node">
+                    <div v-for="(v, video_id) in value" class="available-node"
+                    v-on:click="selectItem({ key: node_addr + '-' + video_id })"
+                    v-bind:class="{ 'selected': selected === node_addr + '-' + video_id }"
+                    >
                       <div class="centered-item">
-                        <ul style="list-style-type: none; text-align: center;">
+                        <ul style="list-style-type: none; text-align: center;"
+                        >
                           <li class="subli">Addr: {{ node_addr }}</li>
                           <li class="subli">VideoID: {{ video_id }}</li>
                           <li class="subli">Description: {{ v.type }}</li>
@@ -88,13 +92,13 @@
             <!-- 优化模式 -->
             <div style="flex: 1;">
                 <span class="param" style="margin-right: 20px;">优化模式</span>
-                <el-select v-model="mode" placeholder="Select">
-                <el-option
+                <el-select v-model="selectedMode" placeholder="Select">
+                  <el-option
                     v-for="item in options"
                     :key="item.value"
                     :label="item.label"
-                    :mode="item.value"
-                />
+                    :value="item.value"
+                  />
                 </el-select>
             </div>
 
@@ -103,7 +107,13 @@
                 <span class="param" style="margin-right: 20px;">优化参数</span>
                 <el-input v-model="constraint" placeholder="输入约束" style="width: 100%; max-width: 200px;" />
             </div>
+
+            <div style="flex: 1;">
+              <el-button type="primary" plain @click="submitText">提交任务</el-button>
             </div>
+            </div>
+
+
 
         </el-card>
       </div>
@@ -111,12 +121,12 @@
   </template>
   
 <script> 
-
+import { ElMessage } from "element-plus";
 export default {
 data() {
     return {
         activeStep: 0, // 当前激活的步骤索引
-        mode:"", // 时延优先vs精度优先
+        selectedMode:"", // 时延优先vs精度优先
         options:[
             {
                 value:'latency',
@@ -127,19 +137,30 @@ data() {
                 label:'精度优先',
             }
         ],
-        constraint:"",
+        constraint:null,
 
 
-        // 静态填充
+        // 视频流信息
         info: "",
         // 已装载服务
-        servicesList: ["face_detection", "face_alignment","car_detection"],
+        servicesList: [],
         // 已选择的流水线
         selectedServices:[],
 
         // 点击已装载的服务按钮后改变按钮样式 info->primary plain->no plain
         buttonTypes: [],
-        isPlain: [] // 初始化按钮是否 plain 的数组
+        isPlain: [], // 初始化按钮是否 plain 的数组
+        
+        // 已选择的视频流相关
+        selected:null,
+        inputText: null,
+        sendUrl:"",
+
+        selectedIp:null,
+        selectedVideoId: null,
+
+        // 任务相关
+        submit_jobs: [],
         
         };
     },
@@ -164,46 +185,207 @@ data() {
           }
           // console.log(this.isPlain[id]);
         },
+
+        // 出错处理
+        errHandler(err) {
+          console.error(error);
+          sessionStorage.clear();
+          // 清空已有任务
+          this.submit_jobs = [];
+          // 更新sessionStorage
+          sessionStorage.setItem("submit_jobs", JSON.stringify(this.submit_jobs));
+          // ?
+          // sessionStorage.setItem("delayCons", JSON.stringify(this.delayCons));
+          // sessionStorage.setItem("accCons", JSON.stringify(this.accCons));
+        },
+
+        // 获取视频流信息
+        getInfo() {
+          console.log("getInfo!!");
+          fetch("/dag/node/get_video_info")
+            .then((response) => response.json())
+            .then((data) => {
+              // console.log(data);
+              this.info = data;
+            })
+            .catch((error) => {
+              errHandler(error);
+            });
+
+          // 获取计算服务信息
+          fetch("/serv/get_service_list")
+            .then((resp) => resp.json())
+            .then((data) => {
+              this.servicesList = data;
+              // console.log(this.servicesList)
+              this.buttonTypes = new Array(this.servicesList.length).fill("info");
+              this.isPlain = new Array(this.servicesList.length).fill(true);
+            })
+            .catch((err) => {
+              errHandler(err);
+            });
+        },
+
+        // 选择视频流
+        selectItem(item){
+          // console.log(item);
+          this.selected = item.key;
+          const ip = item.key.split("-")[0];
+          const videoId = item.key.split("-")[1];
+
+          this.selectedIp = ip;
+          this.selectedVideoId = videoId;
+
+          this.inputText = `{
+        "node_addr": "${ip}",
+        "video_id": ${videoId},
+        "pipeline": ["face_detection", "face_alignment"],
+        "user_constraint": {
+          "delay": 0.3,
+          "accuracy": 0.9
+        }
+    }`;
+
+          this.sendUrl = "/dag/query/submit_query";
+
+          // console.log(this.sendUrl)
+        },
+
+        // 提交任务
+        submitText() {
+      // 根据变量构造请求
+      // this.inputText = `{
+      //   "node_addr": "${this.selectedIp}",
+      //   "video_id": ${this.selectedVideoId},
+      //   "pipeline": ${this.pipeline},
+      //   "user_constraint": {
+      //     "delay": ${this.delayCons},
+      //     "accuracy": ${this.accCons}
+      //   }
+      // }`;
+      console.log(this.selectedMode);
+      if(this.selectedMode === "latency"){
+        this.inputText = {
+        node_addr: this.selectedIp,
+        video_id: parseInt(this.selectedVideoId),
+        pipeline: this.selectedServices,
+        user_constraint: {
+            delay: parseFloat(this.constraint),
+            accuracy: 0.6,
+          },
+        };
+      }else{
+        this.inputText = {
+        node_addr: this.selectedIp,
+        video_id: parseInt(this.selectedVideoId),
+        pipeline: this.selectedServices,
+        user_constraint: {
+            delay: 1,
+            accuracy: parseFloat(this.constraint),
+          },
+        };
+      }
+      
+      // console.log(this.inputText)
+
+      // let text = this.inputText.replace(/[\r\n\s]/g, ""); // remove all newlines and spaces
+      let text = JSON.stringify(this.inputText);
+
+      // console.log(JSON.stringify(text))
+      console.log(text);
+
+      fetch(this.sendUrl, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: text,
+      })
+        .then((response) => response.json())
+        .then((data) => {
+          // console.log(data.query_id);
+          if (data.query_id === "GLOBAL_ID_1") {
+            sessionStorage.clear();
+
+            this.submit_jobs = [];
+            sessionStorage.setItem(
+              "submit_jobs",
+              JSON.stringify(this.submit_jobs)
+            );
+            sessionStorage.setItem("delayCons", JSON.stringify(this.delayCons));
+            sessionStorage.setItem("accCons", JSON.stringify(this.accCons));
+          }
+
+          // 将 submit_jobs 存储在 sessionStorage 中
+          this.submit_jobs.push(data.query_id);
+          console.log(this.submit_jobs);
+          sessionStorage.setItem(
+            "submit_jobs",
+            JSON.stringify(this.submit_jobs)
+          );
+          sessionStorage.setItem("delayCons", JSON.stringify(this.delayCons));
+          sessionStorage.setItem("accCons", JSON.stringify(this.accCons));
+
+          // 设置交互信息
+          this.uploadSuccess = true;
+          this.isSubmit = true;
+          ElMessage({
+            message: "上传成功",
+            showClose: true,
+            type: "success",
+            duration: 3000,
+          });
+        })
+        .catch((error) => {
+          console.error(error);
+          ElMessage.error("上传失败");
+        });
+      // console.log(this.inputText)
+      // console.log(JSON.stringify(text) )
     },
-    created() {
-      // 根据 selectedServices 的长度初始化 buttonTypes 和 isPlain 数组
-      this.buttonTypes = new Array(this.servicesList.length).fill("info");
-      this.isPlain = new Array(this.servicesList.length).fill(true);
-    },
+  },
+    // created() {
+    //   // 根据 selectedServices 的长度初始化 buttonTypes 和 isPlain 数组
+    //   this.buttonTypes = new Array(this.servicesList.length).fill("info");
+    //   this.isPlain = new Array(this.servicesList.length).fill(true);
+    // },
     mounted(){
-        this.info = 
-            {
-                "192.168.56.102:7000": {
-                    "0": {
-                        "type": "traffic flow"
-                    },
-                    "1": {
-                        "type": "people indoor"
-                    },
-                    "3":{
-                      "type":"会议室开会"
-                    },
-                    "4": {
-                        "type": "traffic flow"
-                    }
-                },
-                "192.168.56.102:8000": {
-                    "0": {
-                        "type": "traffic flow"
-                    },
-                    "1": {
-                        "type": "people indoor"
-                    }
-                },
-                "192.168.56.102:9000": {
-                    "0": {
-                        "type": "traffic flow"
-                    },
-                    "1": {
-                        "type": "people indoor"
-                    }
-                },
-            }
+      const submitJobs = sessionStorage.getItem("submit_jobs");
+      if (submitJobs) {
+        this.submit_jobs = JSON.parse(submitJobs);
+      }
+      this.getInfo();
+      // 静态填充
+        // this.info = 
+        //     {
+        //         "192.168.56.102:7000": {
+        //             "0": {
+        //                 "type": "traffic flow"
+        //             },
+        //             "1": {
+        //                 "type": "people indoor"
+        //             },
+        //             "3":{
+        //               "type":"会议室开会"
+        //             },
+        //         },
+        //         "192.168.56.102:8000": {
+        //             "0": {
+        //                 "type": "traffic flow"
+        //             },
+        //             "1": {
+        //                 "type": "people indoor"
+        //             }
+        //         },
+        //         "192.168.56.102:9000": {
+        //             "0": {
+        //                 "type": "traffic flow"
+        //             },
+        //             "1": {
+        //                 "type": "people indoor"
+        //             }
+        //         },
+        //     }
     },
 };
 </script>
@@ -225,9 +407,13 @@ margin-top: 20px;
 }
 
 .horizontal-scroll-container {
+
   display: flex;
   overflow-x: auto;
   white-space: nowrap;
+
+  max-width: 80%; /* 设置最大宽度为80% */
+  margin: 0 auto; /* 水平居中 */
 }
 
 .available-node{
@@ -273,5 +459,9 @@ margin-top: 20px;
   justify-content: center;
   align-items: center;
   height: 100%;
+}
+.selected{
+  background-color: rgb(96, 158, 254);
+  color:white;
 }
 </style>
