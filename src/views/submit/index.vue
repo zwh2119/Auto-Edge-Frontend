@@ -1,12 +1,5 @@
 <template>
     <div>
-      <el-steps :active="activeStep" align-center>
-        <el-step title="选择视频流"></el-step>
-        <el-step title="选择视频流处理步骤"></el-step>
-        <el-step title="已选择处理流水线"></el-step>
-        <el-step title="设置任务约束"></el-step>
-      </el-steps>
-  
       <div class="content">
         <!-- 选择视频流 -->
         <el-card shadow="hover" style="margin: 20px;">
@@ -59,31 +52,26 @@
         </el-card>
 
         <!-- 选择视频流处理步骤 -->
-        <el-card shadow="hover" style="margin: 20px; height: 150px;">
+        <el-card shadow="hover" style="margin: 20px; height: 250px;">
           <div slot="header" style="font-size: 20px;font-weight: bold; margin-bottom: 20px;">选择视频流处理步骤</div>
           <div>
             <div v-for="(serv, id) in servicesList" :key="id" style="display: inline-block; margin-right: 20px;">
               <el-button :type="buttonTypes[id]" :plain="isPlain[id]" @click="changeButtonType(id,serv)">{{ serv }}</el-button>
             </div>
           </div>
-          <!-- <el-input v-model="input2" placeholder="请输入内容"></el-input>
-          <el-button @click="nextStep(1)">下一步</el-button> -->
-
-        </el-card>
-        
-        <!-- 已选择处理流水线 -->
-        <el-card shadow="hover" style="margin: 20px; height: 150px;">
-          <div slot="header" style="font-size: 20px;font-weight: bold; margin-bottom: 20px;">已选择处理流水线</div>
-
-          <!-- <el-input v-model="input3" placeholder="请输入内容"></el-input>
-          <el-button @click="nextStep(2)">下一步</el-button> -->
-
-          <div v-for="(serv,id) in selectedServices" style="display: inline-block;">
+          <!-- 已选择流水线 -->
+          <div slot="header" style="font-size: 18px;margin-top: 30px; margin-bottom: 20px;">已选择流水线</div>
+          <div>
+            <div v-for="(serv,id) in selectedServices" style="display: inline-block;">
               <el-button type="primary" text bg>{{ serv }}</el-button>
               <!-- 显示箭头 -->
               <span v-if="id < selectedServices.length - 1" class="arrow">➡</span>
           </div>
+
+          </div>
+
         </el-card>
+        
 
         <!-- 设置任务约束 -->
         <el-card shadow="hover" style="margin: 20px;">
@@ -104,8 +92,15 @@
 
             <!-- 优化参数 -->
             <div style="flex: 1;">
-                <span class="param" style="margin-right: 20px;">优化参数</span>
-                <el-input v-model="constraint" placeholder="输入约束" style="width: 100%; max-width: 200px;" />
+              <div>
+                <span class="param" style="margin-right: 20px;">时延约束</span>
+                <el-input v-model="delay_constraint" placeholder="输入时延约束" style="width: 100%; max-width: 200px;" />
+              </div>
+              <div style="margin-top: 10px;">
+                
+                <span class="param" style="margin-right: 20px;">精度约束</span>
+                <el-input v-model="acc_constraint" placeholder="输入精度约束" style="width: 100%; max-width: 200px;" />
+              </div>
             </div>
 
             <div style="flex: 1;">
@@ -137,13 +132,13 @@ data() {
                 label:'精度优先',
             }
         ],
-        constraint:null,
-
+        delay_constraint:null,
+        acc_constraint:null,
 
         // 视频流信息
         info: "",
         // 已装载服务
-        servicesList: [],
+        servicesList: ['face_alignment','face_detection','car_detection'],
         // 已选择的流水线
         selectedServices:[],
 
@@ -161,13 +156,11 @@ data() {
 
         // 任务相关
         submit_jobs: [],
+        job_info_dict:{},
         
         };
     },
     methods: {
-        nextStep(step) {
-          this.activeStep = step + 1;
-        },
         changeButtonType(id,serv) {
           if (this.buttonTypes[id] === "info") {
             // 如果按钮类型是 "info"，将其改为 "primary" 并添加到 selectedServices 中
@@ -201,7 +194,7 @@ data() {
 
         // 获取视频流信息
         getInfo() {
-          console.log("getInfo!!");
+          // console.log("getInfo!!");
           fetch("/dag/node/get_video_info")
             .then((response) => response.json())
             .then((data) => {
@@ -263,29 +256,18 @@ data() {
       //     "accuracy": ${this.accCons}
       //   }
       // }`;
-      console.log(this.selectedMode);
-      if(this.selectedMode === "latency"){
-        this.inputText = {
-        node_addr: this.selectedIp,
-        video_id: parseInt(this.selectedVideoId),
-        pipeline: this.selectedServices,
-        user_constraint: {
-            delay: parseFloat(this.constraint),
-            accuracy: 0.6,
-          },
-        };
-      }else{
-        this.inputText = {
-        node_addr: this.selectedIp,
-        video_id: parseInt(this.selectedVideoId),
-        pipeline: this.selectedServices,
-        user_constraint: {
-            delay: 1,
-            accuracy: parseFloat(this.constraint),
-          },
-        };
-      }
-      
+      // console.log(this.selectedMode);
+      // console.log(this.delay_constraint);
+      // console.log(this.acc_constraint);
+      this.inputText = {
+      node_addr: this.selectedIp,
+      video_id: parseInt(this.selectedVideoId),
+      pipeline: this.selectedServices,
+      user_constraint: {
+          delay: parseFloat(this.delay_constraint),
+          accuracy: parseFloat(this.acc_constraint),
+        },
+      };
       // console.log(this.inputText)
 
       // let text = this.inputText.replace(/[\r\n\s]/g, ""); // remove all newlines and spaces
@@ -304,6 +286,7 @@ data() {
         .then((response) => response.json())
         .then((data) => {
           // console.log(data.query_id);
+          // 后端系统重启，需要清空前端存储信息
           if (data.query_id === "GLOBAL_ID_1") {
             sessionStorage.clear();
 
@@ -323,8 +306,26 @@ data() {
             "submit_jobs",
             JSON.stringify(this.submit_jobs)
           );
-          sessionStorage.setItem("delayCons", JSON.stringify(this.delayCons));
-          sessionStorage.setItem("accCons", JSON.stringify(this.accCons));
+
+          let job_info = {
+            job_id: data.query_id, // 任务序号
+            selectedIp:this.selectedIp, // IP
+            selectedVideoId: this.selectedVideoId, // 摄像头ID
+            type: this.info[this.selectedIp][this.selectedVideoId]["type"],
+            mode: this.selectedMode, // 优化模式
+            delay_constraint: this.delay_constraint,
+            acc_constraint:this.delay_constraint
+          }
+
+          this.job_info_dict[data.query_id] = job_info;
+          console.log(this.job_info_dict);
+          sessionStorage.setItem(
+            "job_info_dict",
+            JSON.stringify(this.job_info_dict)
+          )
+
+          // sessionStorage.setItem("delayCons", JSON.stringify(this.delayCons));
+          // sessionStorage.setItem("accCons", JSON.stringify(this.accCons));
 
           // 设置交互信息
           this.uploadSuccess = true;
@@ -356,36 +357,36 @@ data() {
       }
       this.getInfo();
       // 静态填充
-        // this.info = 
-        //     {
-        //         "192.168.56.102:7000": {
-        //             "0": {
-        //                 "type": "traffic flow"
-        //             },
-        //             "1": {
-        //                 "type": "people indoor"
-        //             },
-        //             "3":{
-        //               "type":"会议室开会"
-        //             },
-        //         },
-        //         "192.168.56.102:8000": {
-        //             "0": {
-        //                 "type": "traffic flow"
-        //             },
-        //             "1": {
-        //                 "type": "people indoor"
-        //             }
-        //         },
-        //         "192.168.56.102:9000": {
-        //             "0": {
-        //                 "type": "traffic flow"
-        //             },
-        //             "1": {
-        //                 "type": "people indoor"
-        //             }
-        //         },
-        //     }
+        this.info = 
+            {
+                "192.168.56.102:7000": {
+                    "0": {
+                        "type": "traffic flow"
+                    },
+                    "1": {
+                        "type": "people indoor"
+                    },
+                    "3":{
+                      "type":"会议室开会"
+                    },
+                },
+                "192.168.56.102:8000": {
+                    "0": {
+                        "type": "traffic flow"
+                    },
+                    "1": {
+                        "type": "people indoor"
+                    }
+                },
+                "192.168.56.102:9000": {
+                    "0": {
+                        "type": "traffic flow"
+                    },
+                    "1": {
+                        "type": "people indoor"
+                    }
+                },
+            }
     },
 };
 </script>

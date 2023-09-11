@@ -1,37 +1,28 @@
 <template>
     <div class="content">
-        <!-- 视频任务配置 -->
-        <el-card shadow="hover" style="margin-left: 20px; height: 150px;">
-          <div slot="header" style="font-size: 20px;font-weight: bold; margin-bottom: 20px;">视频任务配置</div>
-          <div style="display: flex; align-items: center; margin-top: 20px;">
-            <!-- 选择查询任务 -->
-            <div style="flex: 1;">
-                <span class="param" style="margin-right: 20px;">选择查询任务</span>
-                <!-- todo:找到当前可查询的任务 -->
-                <el-select v-model="submit_job" placeholder="选择要查询的任务" @change="updateResultUrl">
-                    <el-option
-                        v-for="(query_id, idx) in submit_jobs"
-                        :key="query_id"
-                        :label="query_id"
-                        :value="query_id"
-                    >
-                    </el-option>
-                </el-select>
+        <!-- 视频任务配置new  -->
+        <el-card shadow="hover" style="margin-left: 20px;">
+            <div slot="header" style="font-size: 20px; font-weight: bold; margin-bottom: 20px;">视频任务配置</div>
+            <!-- TODO: 走马灯 -->
+            <div v-for="(values, job_id, index) in job_info_dict" class="available-node"
+            v-on:click="selectItem(job_id)"
+            v-bind:class="{ 'selected': selected === job_id }"
+            >
+                <div class="centered-div">
+                    <ul style="list-style-type: none;">
+                        <li style="font-size: 16px; font-weight: bold;">{{values.selectedIp}}</li>
+                        <li>摄像头ID: {{ values.selectedVideoId }}</li>
+                        <li>描述: {{ values.type }}</li>
+                        <li>优化模式: {{ values.mode }}</li>
+                        <li>
+                            {{ values.mode === 'latency' ? '时延约束' : '精度约束' }}: {{ values.mode === 'latency' ? values.delay_constraint : values.acc_constraint }}
+                        </li>
+                    </ul>
+                </div>
             </div>
 
-            <!-- 优化模式 -->
-            <div style="flex: 1;">
-                <span class="param" style="margin-right: 20px;">优化模式</span>
-                
-            </div>
-
-            <div style="flex: 1;">
-                <span class="param" style="margin-right: 20px;">优化模式参数</span>
-            </div>
-
-        </div>
-          
         </el-card>
+
 
         <!-- 视频任务结果 -->
         <el-row>
@@ -40,7 +31,8 @@
                     <div slot="header" style="font-size: 20px;font-weight: bold; margin-bottom: 20px;">原始视频流</div>
                     <!-- 原始视频流 -->
                     <div style="width: 80%; height: calc(100% - 40px);"> <!-- 40px是header的高度 -->
-                        <img :src="videoUrl + submit_job" style="width: 100%; height: 80%;" />
+                        <!-- TODO: img大小设置 -->
+                        <img :src="videoUrl + selected" style="width: 100%; height: 80%;" />
                     </div>
                 </el-card>
             </el-col>
@@ -72,7 +64,38 @@
             <!-- 应用情境 -->
             <el-card shadow="hover" class="card" style="flex: 1;">
                 <div slot="header" style="font-size: 20px;font-weight: bold; margin-bottom: 20px;">应用情境</div>
-                <div>111</div>
+                <!-- <div style="margin-bottom: 10px; font-size: 18px; font-weight: 400;">应用情境</div> -->
+                    <!-- <div
+                        class="info-h1-flex-text"
+                        v-for="(value, key) in modifiedRuntime"
+                    >
+                        <div>{{ key }}</div>
+                        <div>{{ value }}</div>
+                    </div> -->
+                    <div class="canvas-container">
+                        <div class="inner-div">
+                            <span>时延(s)</span>
+                            <canvas ref="delayCanvas" width="150" height="150"></canvas>
+                        </div>
+                        <div class="inner-div">
+                            <span>目标数量(个)</span>
+                            <canvas ref="objNumCanvas" width="150" height="150"></canvas>
+                        </div>
+                    </div>
+
+                    <div class="canvas-container">
+                        <div class="inner-div">
+                            <span>目标大小</span>
+                            <canvas ref="objSizeCanvas" width="150" height="150"></canvas>
+                        </div>
+                        <div class="inner-div">
+                            <span>场景稳定性</span>
+                            <canvas ref="objStableCanvas" width="150" height="150"></canvas>
+                        </div>
+                </div>
+
+                <div>
+                </div>
             </el-card>
             
             <!-- 资源情境 -->
@@ -230,7 +253,17 @@ export default{
             plan:null,
             showChart:null,
 
+            // 结果细节
+            delay: null,
+            obj_n: null,
+            obj_size: null,
+            obj_stable: null,
+
+            // 选择的查询任务
+            selected: null,
+
             node_type_list: [],
+            job_info_dict:{},
         };
     },
     methods: {
@@ -242,10 +275,45 @@ export default{
                 return 0; // 如果数组为空或不是数组，返回默认值
             }
         },
-        // 选择后更新任务查询的url
-        updateResultUrl() {
-            console.log(this.submit_job);
-            const url = this.resultUrl + this.submit_job;
+        drawCircle(canvas,content_filled) {
+            // const canvas = this.$refs.circleCanvas;
+            const context = canvas.getContext('2d');
+
+            const centerX = canvas.width / 2;
+            const centerY = canvas.height / 2;
+            const radius = Math.min(centerX, centerY) - 20;
+            const lineWidth = 10;
+            // const bandwidth = "50 Mbps"; // 网络带宽文本
+
+            // 绘制圆环的背景
+            context.beginPath();
+            context.arc(centerX, centerY, radius, 0, Math.PI * 2);
+            context.lineWidth = lineWidth;
+            context.strokeStyle = '#ccc'; // 圆环的颜色
+            context.stroke();
+
+            // 绘制网络带宽文本
+            context.font = '20px Arial';
+            context.fillStyle = '#333'; // 文本颜色
+            context.textAlign = 'center';
+            context.textBaseline = 'middle';
+            context.fillText(content_filled, centerX, centerY);
+
+            // 绘制圆环的前景
+            const percentage = 1; // 设置圆环的百分比
+            const endAngle = (Math.PI * 2 * percentage) - (Math.PI / 2);
+            context.beginPath();
+            context.arc(centerX, centerY, radius, -Math.PI / 2, endAngle);
+            context.lineWidth = lineWidth;
+            context.strokeStyle = '#007bff'; // 前景颜色
+            context.stroke();
+        },
+
+        // 点击选择查询任务
+        selectItem(job_id){
+          console.log(job_id);
+          this.selected = job_id;
+          const url = this.resultUrl + this.selected;
             console.log(url);
             // console.log(url)
             const loading = ElLoading.service({
@@ -263,6 +331,17 @@ export default{
                 this.runtime = this.result["latest_result"]["runtime"];
                 this.plan = this.result["latest_result"]["plan"];
                 this.showChart = true;
+
+                // 应用情景
+                this.delay = this.runtime["delay"].toFixed(2); //Cannot read properties of undefined (reading 'toFixed')
+                this.obj_n = this.runtime["obj_n"];
+                this.obj_size = this.runtime["obj_size"].toFixed(2);
+                this.obj_stable = this.runtime["obj_stable"];
+
+                this.drawCircle(this.$refs.delayCanvas,this.delay);
+                this.drawCircle(this.$refs.objNumCanvas,this.obj_n);
+                this.drawCircle(this.$refs.objSizeCanvas,this.obj_size);
+                this.drawCircle(this.$refs.objStableCanvas,this.obj_stable);
                 })
                 .catch((error) => {
                 console.log(error);
@@ -275,44 +354,68 @@ export default{
                 });
                 this.result = null;
                 });
-            },
+        },
     },
     computed: {
         modifiedRuntime() {
-        if (!this.runtime) {
-            return null;
-        }
-        return Object.fromEntries(
-            Object.entries(this.runtime).map(([key, value]) => {
-            if (key === "delay") {
-                return ["时延", value];
-            } else if (key === "obj_n") {
-                return ["目标数量", value];
-            } else if (key === "obj_size") {
-                return ["目标大小", value];
-            } else if (key === "obj_stable") {
-                return ["场景稳定性", value];
-            } else {
-                return [key, value];
+            if (!this.runtime) {
+                return null;
             }
-            })
-        );
+            return Object.fromEntries(
+                Object.entries(this.runtime).map(([key, value]) => {
+                if (key === "delay") {
+                    return ["时延", value.toFixed(2)];
+                } else if (key === "obj_n") {
+                    return ["目标数量", value];
+                } else if (key === "obj_size") {
+                    return ["目标大小", value.toFixed(2)];
+                } else if (key === "obj_stable") {
+                    return ["场景稳定性", value];
+                } else {
+                    return [key, value];
+                }
+                })
+            );
+        },
+        // 改写中文
+        modifiedInfo() {
+            if (!this.job_info_dict) {
+                return null;
+            }
+            let modified_info = Object.fromEntries(
+                Object.entries(this.job_info_dict).map(([key, value]) => {
+                let mode = value.mode === "latency" ? "时延优先" : "精度优先";
+                return [
+                    key,
+                    {
+                    job_id: value.job_id,
+                    selectedIp:value.selectedIp,
+                    摄像头ID: value.selectedVideoId,
+                    描述: value.type,
+                    优化模式: mode,
+                    时延约束: value.delay_constraint,
+                    精度约束: value.acc_constraint
+                    }
+                ];
+                })
+            );
+            return modified_info;
         },
         modifiedPlan() {
-        if (!this.plan) {
-            return null;
-        }
-        return Object.fromEntries(
-            Object.entries(this.plan).map(([key, value]) => {
-            if (key === "flow_mapping") {
-                return ["云边协同配置", value];
-            } else if (key === "video_conf") {
-                return ["视频配置", value];
-            } else {
-                return [key, value];
+            if (!this.plan) {
+                return null;
             }
-            })
-        );
+            return Object.fromEntries(
+                Object.entries(this.plan).map(([key, value]) => {
+                if (key === "flow_mapping") {
+                    return ["云边协同配置", value];
+                } else if (key === "video_conf") {
+                    return ["视频配置", value];
+                } else {
+                    return [key, value];
+                }
+                })
+            );
         },
         //   sumValues() {
         //     // console.log(this.plan_result);
@@ -330,14 +433,54 @@ export default{
         //   },
   },
     mounted(){
-        // 获取可查询的任务
+        if (this.delay !== null) {
+            this.drawCircle();
+        }
+        // 获取可查询的任务相关信息 存储在submit_jobs和job_info_dict中
         const submitJobs = sessionStorage.getItem("submit_jobs");
         if (submitJobs) {
             this.submit_jobs = JSON.parse(submitJobs);
-            console.log(this.submit_jobs)
+            // console.log(this.submit_jobs)
+        }
+        const job_info = sessionStorage.getItem("job_info_dict");
+        if(job_info){
+            this.job_info_dict = JSON.parse(job_info);
+            console.log(this.job_info_dict);
         }
         this.resource_display = ["cpu_ratio","mem_ratio","gpu_ratio","net_ratio(MBps)"],
         // TO_REMOVE: 静态填充
+        // this.job_info_dict = { 
+        //     "GLOBAL_ID_1": 
+        //     { 
+        //         "job_id": "GLOBAL_ID_1", 
+        //         "selectedIp": "172.27.142.247:5001", 
+        //         "selectedVideoId": "1", 
+        //         "type": "people in meeting-room",
+        //          "mode": "latency", 
+        //          "delay_constraint": "0.6", 
+        //          "acc_constraint": "0.6" 
+        //     },
+        //     "GLOBAL_ID_2": 
+        //     { 
+        //         "job_id": "GLOBAL_ID_2", 
+        //         "selectedIp": "172.27.142.247:5002", 
+        //         "selectedVideoId": "2", 
+        //         "type": "people in meeting-room",
+        //          "mode": "latency", 
+        //          "delay_constraint": "0.6", 
+        //          "acc_constraint": "0.6" 
+        //     },
+        //     "GLOBAL_ID_3": 
+        //     { 
+        //         "job_id": "GLOBAL_ID_3", 
+        //         "selectedIp": "172.27.142.247:5003", 
+        //         "selectedVideoId": "3", 
+        //         "type": "people in meeting-room",
+        //          "mode": "latency", 
+        //          "delay_constraint": "0.6", 
+        //          "acc_constraint": "0.6" 
+        //     },
+        // },
         this.cluster_info = {
             "114.212.81.11:5500": {  //以ip:port为key，标记一个节点
         "cpu_ratio": [0.2, 0.0, 0.2, 0.1, 0.3, 0.2, 0.0, 0.7, 0.9],  //节点各个cpu的占用百分比列表
@@ -518,6 +661,57 @@ export default{
 .info-h2-flex-text-items {
   margin-right: 10px;
   border-bottom: 2px dashed #2f74ff;
+}
+.carousel-item-content {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+  height: 100%; /* 设置高度以确保内容垂直居中 */
+}
+
+.horizontal-scroll-container {
+
+  display: flex;
+  overflow-x: auto;
+  white-space: nowrap;
+
+  max-width: 80%; /* 设置最大宽度为80% */
+  margin: 0 auto; /* 水平居中 */
+}
+
+.available-node{
+  display: inline-block;
+  margin: 20px;
+  /* background-color: cadetblue; */
+  width: 320px;
+  border: 1px solid #5c5858;
+  border-radius: 10px;
+  height: 120px;
+}
+.centered-div {
+  margin-top: 10px;
+  display: flex;
+  justify-content: center; /* 在水平方向上居中对齐 */
+  
+}
+.selected{
+  background-color: rgb(96, 158, 254);
+  color:white;
+}
+.canvas-container {
+    display: flex;
+    justify-content: space-between;
+}
+
+.inner-div {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+canvas {
+    margin-top: 10px; /* 为了将span内容留出一些空间 */
 }
 </style>
 
