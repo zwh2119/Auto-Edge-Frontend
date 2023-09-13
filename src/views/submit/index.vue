@@ -78,16 +78,30 @@
           <div slot="header" style="font-size: 20px;font-weight: bold;">设置任务约束</div>
           <div style="display: flex; align-items: center; margin-top: 20px;">
             <!-- 优化模式 -->
-            <div style="flex: 1;">
+            
+            <div style="flex: 1; display: flex; align-items: center;">
                 <span class="param" style="margin-right: 20px;">优化模式</span>
-                <el-select v-model="selectedMode" placeholder="Select">
+                <!-- <el-select v-model="selectedMode" placeholder="Select">
                   <el-option
                     v-for="item in options"
                     :key="item.value"
                     :label="item.label"
                     :value="item.value"
                   />
-                </el-select>
+                </el-select> -->
+                <div class="custom-select">
+                  <select v-model="selectedMode">
+                    <option value="" disabled selected>选择优化模式</option>
+                    <option 
+                      v-for="item in options"
+                      :key="item.value"
+                      :value="item.value"
+                    >
+                      {{ item.label }}
+                    </option>
+                  </select>
+                  <span class="custom-arrow">&#9662;</span>
+                </div>
             </div>
 
             <!-- 优化参数 -->
@@ -464,5 +478,31 @@ margin-top: 20px;
 .selected{
   background-color: rgb(96, 158, 254);
   color:white;
+}
+.custom-select {
+  position: relative;
+  display: inline-block;
+  width: 120px; /* 自定义宽度 */
+  background-color: #f5f5f5; /* 自定义背景颜色 */
+  border: 1px solid #ccc; /* 自定义边框样式 */
+  border-radius: 4px; /* 自定义圆角 */
+  overflow: hidden; /* 隐藏溢出内容 */
+}
+
+select {
+  width: 100%;
+  padding: 10px; /* 自定义内边距 */
+  background-color: transparent; /* 透明背景色 */
+  border: none; /* 移除默认边框 */
+  outline: none; /* 移除选中边框 */
+  appearance: none; /* 隐藏默认下拉箭头 */
+  cursor: pointer; /* 鼠标样式 */
+}
+.custom-arrow {
+  position: absolute;
+  top: 50%;
+  right: 10px;
+  transform: translateY(-50%);
+  font-size: 16px; /* 自定义箭头图标大小 */
 }
 </style>

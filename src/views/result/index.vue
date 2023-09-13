@@ -100,40 +100,57 @@
             
             <!-- 资源情境 -->
             <el-card shadow="hover" class="card" style="flex: 1;">
-                <div slot="header"  style="font-size: 20px;font-weight: bold; margin-bottom: 20px;">资源情境</div>
-                <!-- <div>{{ cluster_info }}</div> -->
-                <el-select v-model="selectedIp" placeholder="请选择IP地址" @change="showSelectedInfo">
-                    <el-option
-                        v-for="(info, ip) in cluster_info"
-                        :key="ip"
-                        :label="ip"
-                        :value="ip"
-                    >
-                    </el-option>
-                </el-select>
-                    
-                    <div v-if="selectedIp">
-                        <div v-for="(v,k) in resource_display">
-                            <!-- cpu利用率 -->
-                            <div v-if="v === 'cpu_ratio'">
-                                <span>核数:{{ cluster_info[selectedIp][v].length }}</span><br/>
-                                <span>利用率:{{ calculateAvgCpuRation(cluster_info[selectedIp][v]) }}</span><br/>
+                <div slot="header"  style="font-size: 20px;font-weight: bold; margin-bottom: 20px;display: flex; align-items: center;">
+                    <span style="margin-right: 50px;">资源情境</span>
+                    <!-- <el-select v-model="selectedIp" placeholder="请选择IP地址" @change="showSelectedInfo">
+                        <el-option
+                            v-for="(info, ip) in cluster_info"
+                            :key="ip"
+                            :label="ip"
+                            :value="ip"
+                        ></el-option>
+                    </el-select> -->
+                    <div class="custom-select">
+                        <select v-model="selectedIp" @change="showSelectedInfo">
+                        <option value="" disabled selected>请选择IP地址</option>
+                        <option
+                            v-for="(info, ip) in cluster_info"
+                            :key="ip"
+                            :value="ip"
+                        >{{ ip }}</option>
+                        </select>
+                        <span class="custom-arrow">&#9662;</span>
+                    </div>
+                </div>
+                
+                    <div>
+                        <!-- 第一行 CPU利用率+内存利用率 -->
+                        <div class="canvas-container">
+                            <div class="inner-div">
+                                <span>CPU利用率</span>
+                                <canvas ref="cpuCanvas" width="150" height="150"></canvas>
                             </div>
-
-                            <!-- 内存利用率 -->
-                            <div v-if="v === 'mem_ratio'">
-                                <span>内存利用率{{ cluster_info[selectedIp][v] }}</span><br/>
-                            </div>
-
-                            <!-- GPU利用率 -->
-
-                            <!-- 网络带宽 -->
-                            <div v-if="v === 'net_ratio(MBps)'">
-                                <span>网络带宽{{ cluster_info[selectedIp][v] }}MB/s</span><br/>
+                            <div class="inner-div">
+                                <span>内存利用率</span>
+                                <canvas ref="memCanvas" width="150" height="150"></canvas>
                             </div>
                         </div>
-
+                        
+                        <!-- 第二行 GPU利用率+网络带宽 -->
+                        <div class="canvas-container">
+                            <div class="inner-div">
+                                <span>GPU利用率</span>
+                                <!-- <div>{{ cluster_info[selectedIp]['gpu_utilization'] }}</div> -->
+                                <canvas ref="gpuCanvas" width="150" height="150"></canvas>
+                            </div>
+                            <div class="inner-div">
+                                <span>网络带宽(KB/s)</span>
+                                <!-- <div>{{ cluster_info[selectedIp]['net_ratio(MBps)'] }}</div> -->
+                                <canvas ref="netCanvas" width="150" height="150"></canvas>
+                            </div>
+                        </div>
                     </div>
+                    
             </el-card>
         </div>
 
@@ -251,7 +268,6 @@ export default{
             appended_result:null,
             runtime:null,
             plan:null,
-            showChart:null,
 
             // 结果细节
             delay: null,
@@ -263,19 +279,20 @@ export default{
             selected: null,
 
             node_type_list: [],
+            // 前端获取已经提交的任务
             job_info_dict:{},
+
+            // 绘制结果折线图
+            chart: null,
+            showChart: false,
+            
         };
     },
     methods: {
-        calculateAvgCpuRation(array){
-            if (Array.isArray(array) && array.length > 0) {
-                const sum = array.reduce((accumulator, currentValue) => accumulator + currentValue, 0);
-                return (sum / array.length).toFixed(2);
-            } else {
-                return 0; // 如果数组为空或不是数组，返回默认值
-            }
-        },
-        drawCircle(canvas,content_filled) {
+        // 绘制结果折线图
+        
+        // 绘制圆环
+        drawCircle(canvas,content_filled,percentage,color) {
             // const canvas = this.$refs.circleCanvas;
             const context = canvas.getContext('2d');
 
@@ -284,6 +301,8 @@ export default{
             const radius = Math.min(centerX, centerY) - 20;
             const lineWidth = 10;
             // const bandwidth = "50 Mbps"; // 网络带宽文本
+
+            context.clearRect(0, 0, canvas.width, canvas.height);
 
             // 绘制圆环的背景
             context.beginPath();
@@ -300,21 +319,36 @@ export default{
             context.fillText(content_filled, centerX, centerY);
 
             // 绘制圆环的前景
-            const percentage = 1; // 设置圆环的百分比
+            // const percentage = 1; // 设置圆环的百分比
             const endAngle = (Math.PI * 2 * percentage) - (Math.PI / 2);
             context.beginPath();
             context.arc(centerX, centerY, radius, -Math.PI / 2, endAngle);
             context.lineWidth = lineWidth;
-            context.strokeStyle = '#007bff'; // 前景颜色
+            context.strokeStyle = color; // 前景颜色
             context.stroke();
         },
 
+        // 计算字典的平均值
+        calculateAverage(dict) {
+            const values = Object.values(dict); // 获取字典中的所有值
+            const sum = values.reduce((acc, val) => acc + val, 0); // 计算值的总和
+            const average = sum / values.length; // 计算平均值
+            return average;
+        },
+        // 资源情境
+        showSelectedInfo(){
+            // console.log(this.selectedIp);
+            this.drawCircle(this.$refs.cpuCanvas,this.cluster_info[this.selectedIp]['n_cpu']+'核',this.cluster_info[this.selectedIp]['cpu_ratio']*0.01,'#5b9bd5');
+            this.drawCircle(this.$refs.memCanvas,this.cluster_info[this.selectedIp]['mem_ratio'],this.cluster_info[this.selectedIp]['mem_ratio']*0.01,'#c5e0b4');
+            this.drawCircle(this.$refs.gpuCanvas,this.calculateAverage(this.cluster_info[this.selectedIp]['gpu_utilization']),this.calculateAverage(this.cluster_info[this.selectedIp]['gpu_utilization'])*0.01,'#ffd966');
+            this.drawCircle(this.$refs.netCanvas,this.cluster_info[this.selectedIp]['net_ratio(MBps)']*1024,1,'#f4b183');
+        },
         // 点击选择查询任务
         selectItem(job_id){
-          console.log(job_id);
+        //   console.log(job_id);
           this.selected = job_id;
           const url = this.resultUrl + this.selected;
-            console.log(url);
+            // console.log(url);
             // console.log(url)
             const loading = ElLoading.service({
                 lock: true,
@@ -333,15 +367,15 @@ export default{
                 this.showChart = true;
 
                 // 应用情景
-                this.delay = this.runtime["delay"].toFixed(2); //Cannot read properties of undefined (reading 'toFixed')
+                if(this.delay) this.delay = this.runtime["delay"].toFixed(2); //Cannot read properties of undefined (reading 'toFixed')
                 this.obj_n = this.runtime["obj_n"];
-                this.obj_size = this.runtime["obj_size"].toFixed(2);
+                if(this.obj_size) this.obj_size = this.runtime["obj_size"].toFixed(2);
                 this.obj_stable = this.runtime["obj_stable"];
 
-                this.drawCircle(this.$refs.delayCanvas,this.delay);
-                this.drawCircle(this.$refs.objNumCanvas,this.obj_n);
-                this.drawCircle(this.$refs.objSizeCanvas,this.obj_size);
-                this.drawCircle(this.$refs.objStableCanvas,this.obj_stable);
+                this.drawCircle(this.$refs.delayCanvas,this.delay,1,'#5b9bd5');
+                this.drawCircle(this.$refs.objNumCanvas,this.obj_n,1,'#c5e0b4');
+                this.drawCircle(this.$refs.objSizeCanvas,this.obj_size,1,'#ffd966');
+                this.drawCircle(this.$refs.objStableCanvas,this.obj_stable,1,'#f4b183');
                 })
                 .catch((error) => {
                 console.log(error);
@@ -355,6 +389,7 @@ export default{
                 this.result = null;
                 });
         },
+        
     },
     computed: {
         modifiedRuntime() {
@@ -417,25 +452,11 @@ export default{
                 })
             );
         },
-        //   sumValues() {
-        //     // console.log(this.plan_result);
-        //     // console.log(this.plan_result["delay"]);
-        //     if (!this.plan_result) {
-        //       return 0;
-        //     }
-        //     const delayObj = this.plan_result["delay"];
-        //     if (delayObj) {
-        //       const values = Object.values(delayObj);
-        //       const sum = values.reduce((a, b) => a + b, 0);
-        //       return sum;
-        //     }
-        //     return 0;
-        //   },
   },
     mounted(){
-        if (this.delay !== null) {
-            this.drawCircle();
-        }
+        // if (this.delay !== null) {
+        //     this.drawCircle();
+        // }
         // 获取可查询的任务相关信息 存储在submit_jobs和job_info_dict中
         const submitJobs = sessionStorage.getItem("submit_jobs");
         if (submitJobs) {
@@ -482,77 +503,39 @@ export default{
         //     },
         // },
         this.cluster_info = {
-            "114.212.81.11:5500": {  //以ip:port为key，标记一个节点
-        "cpu_ratio": [0.2, 0.0, 0.2, 0.1, 0.3, 0.2, 0.0, 0.7, 0.9],  //节点各个cpu的占用百分比列表
-        "mem_ratio": 5.4,  //节点的内存占用百分比
-        "net_ratio(MBps)": 0.31806,  //节点的带宽
-        "swap_ratio": 0.0, //节点交换内存使用情况
-        "gpu_mem":  {  //节点各个GPU的显存占用百分比字典
-            "0": 0.012761433919270834, // 第0张显卡
-            "1": 0.012761433919270834, // 第1张显卡
-            "2": 0.012761433919270834, 
-            "3": 0.012761433919270834
+    "114.212.81.11": {
+        "cpu_ratio": 0.1,
+        "gpu_mem": {
+            "0": 1.2761433919270835,
+            "1": 1.2761433919270835,
+            "2": 1.2761433919270835,
+            "3": 1.2761433919270835
         },
-        "gpu_utilization": {  //节点各个GPU的计算能力利用率百分比字典
-            "0": 7, // 第0张显卡；nano或tx2没有显卡，因此只有"0"这一个键；服务器有多张显卡
-            "1": 8, // 第1张显卡
-            "2": 9, 
-            "3": 10
+        "gpu_utilization": {
+            "0": 0,
+            "1": 0,
+            "2": 0,
+            "3": 0
         },
-        "car_detection": {  //以服务名为key，表示节点上某类服务的情况
-            "1194975": {  //以进程pid为key，表示节点上某类服务某个工作进程的情况
-                "cpu_ratio": 0.0,  //某个进程的cpu使用率
-                "mem_ratio": 0.20176213870657234,  //某个进程的内存占用率
-                "task_to_do": 0  //某个进程待做的任务数量
-            }
-        },
-        "face_alignment": {
-            "1196516": {
-                "cpu_ratio": 0.0,
-                "mem_ratio": 0.14147854986806502,
-                "task_to_do": 0
-            }
-        },
-        "face_detection": {
-            "1196515": {
-                "cpu_ratio": 0.0,
-                "mem_ratio": 0.11392224417874179,
-                "task_to_do": 0
-            }
-        }
+        "mem_ratio": 2.5,
+        "n_cpu": 48,
+        "net_ratio(MBps)": 0.00019,
+        "node_role": "cloud",
+        "swap_ratio": 0
     },
-    "172.27.142.109:5501": {
-        "car_detection": {
-            "784": {
-                "cpu_ratio": 0.0,
-                "mem_ratio": 1.7194944849511828,
-                "task_to_do": 0
-            }
+    "172.27.142.247": {
+        "cpu_ratio": 5.9,
+        "gpu_mem": {
+            "0": 12.066474327674278
         },
-        "cpu_ratio": [2.7, 0.7, 2.0, 1.3, 1.8, 0.7, 1.4],
-        "face_alignment": {
-            "1896": {
-                "cpu_ratio": 0.0,
-                "mem_ratio": 0.9882168921417035,
-                "task_to_do": 0
-            }
+        "gpu_utilization": {
+            "0": 0
         },
-        "face_detection": {
-            "10832": {
-                "cpu_ratio": 0.0,
-                "mem_ratio": 0.8926369264778068,
-                "task_to_do": 0
-            }
-        },
-        "mem_ratio": 72.9,
-        "net_ratio(MBps)": 0.10514,
-        "swap_ratio": 89.9,
-        "gpu_ratio":  {  
-            "0": 0.012761433919270834, 
-            "1": 0.012761433919270834, 
-            "2": 0.012761433919270834, 
-            "3": 0.012761433919270834
-        }
+        "mem_ratio": 24.5,
+        "n_cpu": 4,
+        "net_ratio(MBps)": 0.00143,
+        "node_role": "edge",
+        "swap_ratio": 0
     }
         };
         this.node_type_list = [
@@ -712,6 +695,32 @@ export default{
 
 canvas {
     margin-top: 10px; /* 为了将span内容留出一些空间 */
+}
+.custom-select {
+  position: relative;
+  display: inline-block;
+  width: 200px; /* 自定义宽度 */
+  background-color: #f5f5f5; /* 自定义背景颜色 */
+  border: 1px solid #ccc; /* 自定义边框样式 */
+  border-radius: 4px; /* 自定义圆角 */
+  overflow: hidden; /* 隐藏溢出内容 */
+}
+
+select {
+  width: 100%;
+  padding: 10px; /* 自定义内边距 */
+  background-color: transparent; /* 透明背景色 */
+  border: none; /* 移除默认边框 */
+  outline: none; /* 移除选中边框 */
+  appearance: none; /* 隐藏默认下拉箭头 */
+  cursor: pointer; /* 鼠标样式 */
+}
+.custom-arrow {
+  position: absolute;
+  top: 50%;
+  right: 10px;
+  transform: translateY(-50%);
+  font-size: 16px; /* 自定义箭头图标大小 */
 }
 </style>
 
