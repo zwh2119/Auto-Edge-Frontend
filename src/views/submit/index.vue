@@ -17,15 +17,18 @@
             <!-- 显示视频流 -->
 
             <!-- <div v-for="(value, node_addr) in info" style="display: inline-block; margin-right: 10px;">
-              <div class="available-node"
-                v-for="(v, video_id) in value" >
-                <ul style="list-style-type: none;">
-                  <li class="subli">Addr: {{ node_addr }}</li>
-                  <li class="subli">VideoID: {{ video_id }}</li>
-                  <li class="subli">Description: {{ v.type }}</li>
-                </ul>
-              </div>
-            </div> -->
+                <div class="available-node"
+                  v-for="(v, video_id) in value" 
+                  v-on:click="selectItem({ key: node_addr + '-' + video_id })"
+                  v-bind:class="{ 'selected': selected === node_addr + '-' + video_id }"
+                  >
+                  <ul style="list-style-type: none;">
+                    <li class="subli">Addr: {{ node_addr }}</li>
+                    <li class="subli">VideoID: {{ video_id }}</li>
+                    <li class="subli">Description: {{ v.type }}</li>
+                  </ul>
+                </div>
+              </div> -->
 
             <el-carousel :autoplay="false" arrow="always" trigger="click">
               <el-carousel-item v-for="(value, node_addr, index) in info" :key="index">
@@ -36,11 +39,11 @@
                     v-bind:class="{ 'selected': selected === node_addr + '-' + video_id }"
                     >
                       <div class="centered-item">
-                        <ul style="list-style-type: none; text-align: center;"
+                        <ul style="list-style-type: none;"
                         >
-                          <li class="subli">Addr: {{ node_addr }}</li>
-                          <li class="subli">VideoID: {{ video_id }}</li>
-                          <li class="subli">Description: {{ v.type }}</li>
+                          <li class="subli">IP地址: {{ node_addr }}</li>
+                          <li class="subli">摄像头ID: {{ video_id }}</li>
+                          <li class="subli">描述: {{ v.type }}</li>
                         </ul>
                       </div>
                     </div>
@@ -171,6 +174,10 @@ data() {
         // 任务相关
         submit_jobs: [],
         job_info_dict:{},
+
+        // 分页控件
+        itemsPerPage: 3, // 每页显示的数量
+        currentPage: 1, // 当前页数
         
         };
     },
@@ -235,7 +242,7 @@ data() {
 
         // 选择视频流
         selectItem(item){
-          // console.log(item);
+          console.log(item);
           this.selected = item.key;
           const ip = item.key.split("-")[0];
           const videoId = item.key.split("-")[1];
@@ -260,104 +267,98 @@ data() {
 
         // 提交任务
         submitText() {
-      // 根据变量构造请求
-      // this.inputText = `{
-      //   "node_addr": "${this.selectedIp}",
-      //   "video_id": ${this.selectedVideoId},
-      //   "pipeline": ${this.pipeline},
-      //   "user_constraint": {
-      //     "delay": ${this.delayCons},
-      //     "accuracy": ${this.accCons}
-      //   }
-      // }`;
-      // console.log(this.selectedMode);
-      // console.log(this.delay_constraint);
-      // console.log(this.acc_constraint);
-      this.inputText = {
-      node_addr: this.selectedIp,
-      video_id: parseInt(this.selectedVideoId),
-      pipeline: this.selectedServices,
-      user_constraint: {
-          delay: parseFloat(this.delay_constraint),
-          accuracy: parseFloat(this.acc_constraint),
+          this.inputText = {
+          node_addr: this.selectedIp,
+          video_id: parseInt(this.selectedVideoId),
+          pipeline: this.selectedServices,
+          user_constraint: {
+              delay: parseFloat(this.delay_constraint),
+              accuracy: parseFloat(this.acc_constraint),
+            },
+          };
+          console.log(this.inputText)
+
+          // let text = this.inputText.replace(/[\r\n\s]/g, ""); // remove all newlines and spaces
+          let text = JSON.stringify(this.inputText);
+
+          // console.log(JSON.stringify(text))
+          console.log(text);
+
+          fetch(this.sendUrl, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: text,
+          })
+            .then((response) => response.json())
+            .then((data) => {
+              // console.log(data.query_id);
+              // 后端系统重启，需要清空前端存储信息
+              if (data.query_id === "GLOBAL_ID_1") {
+                sessionStorage.clear();
+
+                this.submit_jobs = [];
+                sessionStorage.setItem(
+                  "submit_jobs",
+                  JSON.stringify(this.submit_jobs)
+                );
+                this.job_info_dict = {};
+                sessionStorage.setItem(
+                  "job_info_dict",
+                  JSON.stringify(this.job_info_dict)
+                );
+                // sessionStorage.setItem("delayCons", JSON.stringify(this.delayCons));
+                // sessionStorage.setItem("accCons", JSON.stringify(this.accCons));
+              }
+
+              // 将 submit_jobs 存储在 sessionStorage 中
+              this.submit_jobs.push(data.query_id);
+              console.log(this.submit_jobs);
+              sessionStorage.setItem(
+                "submit_jobs",
+                JSON.stringify(this.submit_jobs)
+              );
+
+              let job_info = {
+                job_id: data.query_id, // 任务序号
+                selectedIp:this.selectedIp, // IP
+                selectedVideoId: this.selectedVideoId, // 摄像头ID
+                type: this.info[this.selectedIp][this.selectedVideoId]["type"],
+                mode: this.selectedMode, // 优化模式
+                delay_constraint: this.delay_constraint,
+                acc_constraint:this.delay_constraint
+              }
+
+              this.job_info_dict[data.query_id] = job_info;
+              // console.log(this.job_info_dict);
+              sessionStorage.setItem(
+                "job_info_dict",
+                JSON.stringify(this.job_info_dict)
+              )
+
+              console.log(this.job_info_dict);
+
+              // sessionStorage.setItem("delayCons", JSON.stringify(this.delayCons));
+              // sessionStorage.setItem("accCons", JSON.stringify(this.accCons));
+
+              // 设置交互信息
+              this.uploadSuccess = true;
+              this.isSubmit = true;
+              ElMessage({
+                message: "上传成功",
+                showClose: true,
+                type: "success",
+                duration: 3000,
+              });
+            })
+            .catch((error) => {
+              console.error(error);
+              ElMessage.error("上传失败");
+            });
+          // console.log(this.inputText)
+          // console.log(JSON.stringify(text) )
         },
-      };
-      // console.log(this.inputText)
-
-      // let text = this.inputText.replace(/[\r\n\s]/g, ""); // remove all newlines and spaces
-      let text = JSON.stringify(this.inputText);
-
-      // console.log(JSON.stringify(text))
-      console.log(text);
-
-      fetch(this.sendUrl, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: text,
-      })
-        .then((response) => response.json())
-        .then((data) => {
-          // console.log(data.query_id);
-          // 后端系统重启，需要清空前端存储信息
-          if (data.query_id === "GLOBAL_ID_1") {
-            sessionStorage.clear();
-
-            this.submit_jobs = [];
-            sessionStorage.setItem(
-              "submit_jobs",
-              JSON.stringify(this.submit_jobs)
-            );
-            sessionStorage.setItem("delayCons", JSON.stringify(this.delayCons));
-            sessionStorage.setItem("accCons", JSON.stringify(this.accCons));
-          }
-
-          // 将 submit_jobs 存储在 sessionStorage 中
-          this.submit_jobs.push(data.query_id);
-          console.log(this.submit_jobs);
-          sessionStorage.setItem(
-            "submit_jobs",
-            JSON.stringify(this.submit_jobs)
-          );
-
-          let job_info = {
-            job_id: data.query_id, // 任务序号
-            selectedIp:this.selectedIp, // IP
-            selectedVideoId: this.selectedVideoId, // 摄像头ID
-            type: this.info[this.selectedIp][this.selectedVideoId]["type"],
-            mode: this.selectedMode, // 优化模式
-            delay_constraint: this.delay_constraint,
-            acc_constraint:this.delay_constraint
-          }
-
-          this.job_info_dict[data.query_id] = job_info;
-          console.log(this.job_info_dict);
-          sessionStorage.setItem(
-            "job_info_dict",
-            JSON.stringify(this.job_info_dict)
-          )
-
-          // sessionStorage.setItem("delayCons", JSON.stringify(this.delayCons));
-          // sessionStorage.setItem("accCons", JSON.stringify(this.accCons));
-
-          // 设置交互信息
-          this.uploadSuccess = true;
-          this.isSubmit = true;
-          ElMessage({
-            message: "上传成功",
-            showClose: true,
-            type: "success",
-            duration: 3000,
-          });
-        })
-        .catch((error) => {
-          console.error(error);
-          ElMessage.error("上传失败");
-        });
-      // console.log(this.inputText)
-      // console.log(JSON.stringify(text) )
-    },
   },
     // created() {
     //   // 根据 selectedServices 的长度初始化 buttonTypes 和 isPlain 数组
@@ -369,6 +370,14 @@ data() {
       if (submitJobs) {
         this.submit_jobs = JSON.parse(submitJobs);
       }
+
+      const storedJobInfo = sessionStorage.getItem("job_info_dict");
+
+      if (storedJobInfo) {
+        // 如果 sessionStorage 中存在保存的任务信息，则将其解析为对象并赋值给 this.job_info_dict
+        this.job_info_dict = JSON.parse(storedJobInfo);
+      }
+      
       this.getInfo();
       // 静态填充
         this.info = 
@@ -453,18 +462,18 @@ margin-top: 20px;
 /* 走马灯指示条 */
 /* 修改页码指示器的颜色 */
 .el-carousel__indicator {
-  background-color: rgb(208, 193, 179);
+  background-color: rgb(238, 230, 221);
 }
 
 /* 修改激活页码的颜色 */
-.el-carousel__button.is-active {
+/* .el-carousel__button.is-active {
   background-color: darksalmon;
-}
+} */
 
 /* 修改悬停时的颜色 */
-.el-carousel__button:hover {
+/* .el-carousel__button:hover {
   background-color: paleturquoise;
-}
+} */
 .ipcontent-button{
   height: 90px;
   width: 230px;
@@ -473,7 +482,7 @@ margin-top: 20px;
   display: flex;
   justify-content: center;
   align-items: center;
-  height: 100%;
+  /* height: 100%; */
 }
 .selected{
   background-color: rgb(96, 158, 254);

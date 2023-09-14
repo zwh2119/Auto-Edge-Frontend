@@ -1,10 +1,11 @@
 <template>
     <div class="content">
         <!-- 视频任务配置new  -->
-        <el-card shadow="hover" style="margin-left: 20px;">
+        <el-card shadow="hover" style="margin-left: 20px;margin-right: 20px;">
             <div slot="header" style="font-size: 20px; font-weight: bold; margin-bottom: 20px;">视频任务配置</div>
-            <!-- TODO: 走马灯 -->
-            <div v-for="(values, job_id, index) in job_info_dict" class="available-node"
+            <!-- TODO: 分页显示 -->
+            <!-- <div>{{ job_info_dict}}</div> -->
+            <!-- <div v-for="(values, job_id, index) in job_info_dict" class="available-node"
             v-on:click="selectItem(job_id)"
             v-bind:class="{ 'selected': selected === job_id }"
             >
@@ -19,6 +20,36 @@
                         </li>
                     </ul>
                 </div>
+            </div> -->
+
+
+            <!-- 显示当前页的内容 -->
+            <div style="display: flex; flex-direction: column; align-items: center;">
+              <!-- 上面的 div 包含 v-for 循环的内容 -->
+              <div>
+                <div v-for="(values, job_id, index) in currentPageItems" class="available-node-result"
+                  v-on:click="selectItem(job_id)"
+                  v-bind:class="{ 'selected': selected === job_id }"
+                >
+                  <div class="centered-div">
+                    <ul style="list-style-type: none;">
+                        <li style="font-size: 16px; font-weight: bold;">{{values.selectedIp}}</li>
+                        <li class="subli">摄像头ID: {{ values.selectedVideoId }}</li>
+                        <li class="subli">描述: {{ values.type }}</li>
+                        <li class="subli">优化模式: {{ values.mode == 'latency'? '时延优先':'精度优先' }}</li>
+                        <li class="subli">
+                            {{ values.mode === 'latency' ? '时延约束' : '精度约束' }}: {{ values.mode === 'latency' ? values.delay_constraint : values.acc_constraint }}
+                        </li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+
+              <!-- 下面的 div 包含分页控件 -->
+              <div class="pagination">
+                <el-button @click="prevPage" :disabled="currentPage === 1">上一页</el-button>
+                <el-button @click="nextPage" :disabled="currentPage === pageCount">下一页</el-button>
+              </div>
             </div>
 
         </el-card>
@@ -26,7 +57,7 @@
 
         <!-- 视频任务结果 -->
         <el-row>
-            <el-col :span="8">
+            <el-col :span="10">
                 <el-card shadow="hover" style="margin: 20px; height: 350px;">
                     <div slot="header" style="font-size: 20px;font-weight: bold; margin-bottom: 20px;">原始视频流</div>
                     <!-- 原始视频流 -->
@@ -37,27 +68,16 @@
                 </el-card>
             </el-col>
 
-            <el-col :span="16">
-                <el-card shadow="hover" style="margin: 20px; height: 350px;">
+            <el-col :span="14">
+                <el-card shadow="hover" style="margin: 20px; height: 350px; margin-left: 0;">
                     <div slot="header" style="font-size: 20px;font-weight: bold; margin-bottom: 20px;">执行结果</div>
                     <!-- 结果绘图 -->
-                    <!-- todo:结果绘图 -->
+                    <div id="result" style="width: 600px;height:250px;"></div>
                     
                 </el-card>   
             </el-col>
         </el-row>
 
-        <!-- <el-card shadow="hover" style="margin: 20px; height: 350px;">
-          <div slot="header" style="font-size: 20px;font-weight: bold; margin-bottom: 20px;">视频任务结果</div>
-          <div>
-            <div>
-                <div style="font-size: 18px; margin-bottom: 10px;">原始视频流:</div>
-                <img :src="videoUrl + submit_job" width="280" height="200" />
-            </div>
-
-          </div>
-          
-        </el-card> -->
 
         <!-- 运行时情境 -->
         <div class="card-container">
@@ -247,6 +267,7 @@
 </template>
 <script>
 import { ElLoading, ElMessage } from "element-plus";
+import * as echarts from "echarts";
 export default{
     data(){
         return{
@@ -283,14 +304,125 @@ export default{
             job_info_dict:{},
 
             // 绘制结果折线图
-            chart: null,
-            showChart: false,
+            chart:null,
+
+            // 定时器
+            timer:null,
+
+            // 分页控件
+            itemsPerPage: 3, // 每页显示的数量
+            currentPage: 1, // 当前页数
+
             
         };
     },
     methods: {
         // 绘制结果折线图
-        
+        drawResult(){
+          if(!this.chart){
+            var chart = echarts.init(document.getElementById('result'));
+            this.chart = chart;
+          }
+          const yKey = Object.keys(this.appended_result[0])[0]; // 获取第一个键名作为纵坐标的键名
+
+          const data = this.appended_result.map((item) => ({
+            x: item.n_loop,
+            y: item[yKey], // 使用纵坐标的键名来获取对应的值
+          }));
+
+          const appended_data = this.appended_result;
+
+          // 获取追加结果中key非n_loop的数据
+          var xAsixName = "n_loop";
+          var seriesData = {};
+          var resKeyList = [];
+          // console.log("appended_data length: " + appended_data.length);
+          for (var i = 0; i < appended_data.length; i++) {
+            var keyList = Object.keys(appended_data[i]["count_result"]);
+            for (var j = 0; j < keyList.length; j++) {
+              if (resKeyList.indexOf(keyList[j]) == -1) {
+                resKeyList.push(keyList[j]);
+              }
+            }
+            // resKeyList = resKeyList.concat(keyList);
+          }
+          // resKeyList = [new Set(resKeyList)]
+          // console.log("resKeyList: " + resKeyList);
+          // var resKeyList = Object.keys(appended_data[0])
+          for (var i = 0; i < resKeyList.length; i++) {
+            var key = resKeyList[i];
+            if (key !== xAsixName) {
+              seriesData[key] = [];
+            }
+          }
+          // console.log("init seriesData keys: " + Object.keys(seriesData));
+          // 生成各key的数据序列
+          for (var i = 0; i < appended_data.length; i++) {
+            var frameInfo = appended_data[i]["count_result"];
+            for (var j in frameInfo) {
+              var key = j;
+              var value = frameInfo[j];
+              if (key !== xAsixName) {
+                seriesData[key].push(value);
+              }
+            }
+          }
+          // 生成series列表和与其对应的legend列表
+          var seriesList = [];
+          var legendList = [];
+          // console.log("seriesData entries: " + Object.entries(seriesData));
+          for (var ent of Object.entries(seriesData)) {
+            // console.log("ent[0]=" + ent[0]);
+            // console.log("ent[1]=" + ent[1]);
+            legendList.push(ent[0]);
+            seriesList.push({
+              name: ent[0],
+              type: "line",
+              // type: "bar",
+              // stack: "stack",
+              label: {
+                show: true,
+                position: "top",
+                color: "black",
+                fontSize: 12,
+                formatter: function (d) {
+                  return d.data;
+                },
+              },
+              data: ent[1],
+            });
+          }
+
+          const option = {
+            grid: {
+              bottom: "10%",
+              right: "15%",
+              top: "30%",
+              left: "15%",
+            },
+            xAxis: {
+              type: "category",
+              data: data.map((item) => item.x), // 使用映射后的横坐标数据
+              name: "帧数",
+            },
+            yAxis: {
+              type: "value",
+              name: "检测到的数量",
+            },
+            legend: {
+              data: legendList,
+            },
+            series: seriesList,
+            // series: [
+            //   {
+            //     type: "line",
+            //     data: data.map((item) => item.y), // 使用映射后的纵坐标数据
+            //   },
+            // ],
+          };
+          this.chart.setOption(option,true);
+
+        },
         // 绘制圆环
         drawCircle(canvas,content_filled,percentage,color) {
             // const canvas = this.$refs.circleCanvas;
@@ -327,71 +459,147 @@ export default{
             context.strokeStyle = color; // 前景颜色
             context.stroke();
         },
-
-        // 计算字典的平均值
-        calculateAverage(dict) {
-            const values = Object.values(dict); // 获取字典中的所有值
-            const sum = values.reduce((acc, val) => acc + val, 0); // 计算值的总和
-            const average = sum / values.length; // 计算平均值
-            return average;
+        prevPage() {
+          if (this.currentPage > 1) {
+            this.currentPage--;
+          }
+        },
+        nextPage() {
+          if (this.currentPage < this.pageCount) {
+            this.currentPage++;
+          }
+        },
+        // 获得最大值
+        getMaxKey(dict){
+          var maxv = 0;
+          var maxk = '';
+          for(const key in dict){
+            if(dict[key] > maxv){
+              maxv = dict[key];
+              maxk = key;
+            }
+          }
+          return [maxk,maxv];
         },
         // 资源情境
         showSelectedInfo(){
             // console.log(this.selectedIp);
             this.drawCircle(this.$refs.cpuCanvas,this.cluster_info[this.selectedIp]['n_cpu']+'核',this.cluster_info[this.selectedIp]['cpu_ratio']*0.01,'#5b9bd5');
             this.drawCircle(this.$refs.memCanvas,this.cluster_info[this.selectedIp]['mem_ratio'],this.cluster_info[this.selectedIp]['mem_ratio']*0.01,'#c5e0b4');
-            this.drawCircle(this.$refs.gpuCanvas,this.calculateAverage(this.cluster_info[this.selectedIp]['gpu_utilization']),this.calculateAverage(this.cluster_info[this.selectedIp]['gpu_utilization'])*0.01,'#ffd966');
-            this.drawCircle(this.$refs.netCanvas,this.cluster_info[this.selectedIp]['net_ratio(MBps)']*1024,1,'#f4b183');
+            // 获得使用最多的卡的显存和使用率
+            const kv = this.getMaxKey(this.cluster_info[this.selectedIp]['gpu_mem_utilization']);
+            const gpu_num = kv[0];
+            const gpu_ratio = kv[1];
+            this.drawCircle(this.$refs.gpuCanvas,this.cluster_info[this.selectedIp]['gpu_mem_total'][gpu_num]+"GB",gpu_ratio*0.01,'#ffd966');
+            this.drawCircle(this.$refs.netCanvas,this.cluster_info[this.selectedIp]['net_ratio(MBps)'].toFixed(2)*1024,1,'#f4b183');
         },
         // 点击选择查询任务
         selectItem(job_id){
         //   console.log(job_id);
           this.selected = job_id;
-          const url = this.resultUrl + this.selected;
-            // console.log(url);
-            // console.log(url)
-            const loading = ElLoading.service({
-                lock: true,
-                text: "Loading",
-                background: "rgba(0, 0, 0, 0.7)",
-            });
-            fetch(url)
-                .then((response) => response.json())
-                .then((data) => {
-                loading.close();
-                console.log(data);
-                this.result = data;
-                this.appended_result = this.result["appended_result"];
-                this.runtime = this.result["latest_result"]["runtime"];
-                this.plan = this.result["latest_result"]["plan"];
-                this.showChart = true;
+          this.submit_job = job_id;
+          this.updateResultUrl();
+        },
 
-                // 应用情景
-                if(this.delay) this.delay = this.runtime["delay"].toFixed(2); //Cannot read properties of undefined (reading 'toFixed')
-                this.obj_n = this.runtime["obj_n"];
-                if(this.obj_size) this.obj_size = this.runtime["obj_size"].toFixed(2);
+        // 查询结果
+        updateResultUrl() {
+          console.log(this.submit_job);
+          const url = this.resultUrl + this.submit_job;
+          // console.log(url)
+          const loading = ElLoading.service({
+            lock: true,
+            text: "Loading",
+            background: "rgba(0, 0, 0, 0.7)",
+          });
+          fetch(url)
+            .then((response) => response.json())
+            .then((data) => {
+              loading.close();
+              console.log(data);
+              this.result = data;
+              this.appended_result = this.result["appended_result"];
+              this.runtime = this.result["latest_result"]["runtime"];
+              this.plan = this.result["latest_result"]["plan"];
+              
+
+              // 应用情景
+              this.delay = this.runtime["delay"].toFixed(2); //Cannot read properties of undefined (reading 'toFixed')
+              this.obj_n = this.runtime["obj_n"];
+              this.obj_size = this.runtime["obj_size"].toFixed(2);
+              this.obj_stable = this.runtime["obj_stable"];
+
+              // 应用情境
+              if (this.runtime && this.runtime["delay"]) {
+                this.delay = this.runtime["delay"].toFixed(2);
+              } else {
+                this.delay = null;
+              }
+
+              if (this.runtime && this.runtime["obj_n"]) {
+                this.obj_n = Math.floor(this.runtime["obj_n"]);
+              } else {
+                this.obj_n = null; 
+              }
+
+              if (this.runtime && this.runtime["obj_size"]) {
+                this.obj_size = this.runtime["obj_size"].toFixed(2);
+              } else {
+                this.obj_size = null; 
+              }
+
+              if (this.runtime && this.runtime["obj_stable"]) {
                 this.obj_stable = this.runtime["obj_stable"];
+              } else {
+                this.obj_stable = null; 
+              }
 
-                this.drawCircle(this.$refs.delayCanvas,this.delay,1,'#5b9bd5');
-                this.drawCircle(this.$refs.objNumCanvas,this.obj_n,1,'#c5e0b4');
-                this.drawCircle(this.$refs.objSizeCanvas,this.obj_size,1,'#ffd966');
-                this.drawCircle(this.$refs.objStableCanvas,this.obj_stable,1,'#f4b183');
-                })
-                .catch((error) => {
-                console.log(error);
-                loading.close();
-                ElMessage({
-                    showClose: true,
-                    message: "结果尚未生成,请稍后",
-                    type: "error",
-                    duration: 1500,
-                });
-                this.result = null;
-                });
+              this.drawCircle(this.$refs.delayCanvas,this.delay,1,'#5b9bd5');
+              this.drawCircle(this.$refs.objNumCanvas,this.obj_n,1,'#c5e0b4');
+              this.drawCircle(this.$refs.objSizeCanvas,this.obj_size,1,'#ffd966');
+              this.drawCircle(this.$refs.objStableCanvas,this.obj_stable,1,'#f4b183');
+              this.drawResult();
+                
+            })
+            .catch((error) => {
+              console.log(error);
+              loading.close();
+              ElMessage({
+                showClose: true,
+                message: "结果尚未生成,请稍后",
+                type: "error",
+                duration: 1500,
+              });
+              this.result = null;
+            });
+        },
+
+        // 更新系统资源状态
+        updateResourceUrl() {
+          const url = this.resourceUrl;
+          fetch(url)
+            .then((resp) => resp.json())
+            .then((data) => {
+              // console.log(data);
+              this.cluster_info = data;
+            })
+            .catch((err) => {
+              console.log(err);
+            });
         },
         
     },
     computed: {
+        pageCount() {
+          return Math.ceil(Object.keys(this.job_info_dict).length / this.itemsPerPage);
+        },
+        currentPageItems() {
+          const start = (this.currentPage - 1) * this.itemsPerPage;
+          const end = start + this.itemsPerPage;
+          return Object.keys(this.job_info_dict).slice(start, end).reduce((obj, key) => {
+            obj[key] = this.job_info_dict[key];
+            return obj;
+          }, {});
+        },
         modifiedRuntime() {
             if (!this.runtime) {
                 return null;
@@ -452,7 +660,7 @@ export default{
                 })
             );
         },
-  },
+    },
     mounted(){
         // if (this.delay !== null) {
         //     this.drawCircle();
@@ -461,12 +669,12 @@ export default{
         const submitJobs = sessionStorage.getItem("submit_jobs");
         if (submitJobs) {
             this.submit_jobs = JSON.parse(submitJobs);
-            // console.log(this.submit_jobs)
+            // console.log(this.submit_jobs);
         }
         const job_info = sessionStorage.getItem("job_info_dict");
         if(job_info){
             this.job_info_dict = JSON.parse(job_info);
-            console.log(this.job_info_dict);
+            // console.log(this.job_info_dict);
         }
         this.resource_display = ["cpu_ratio","mem_ratio","gpu_ratio","net_ratio(MBps)"],
         // TO_REMOVE: 静态填充
@@ -502,42 +710,42 @@ export default{
         //          "acc_constraint": "0.6" 
         //     },
         // },
-        this.cluster_info = {
-    "114.212.81.11": {
-        "cpu_ratio": 0.1,
-        "gpu_mem": {
-            "0": 1.2761433919270835,
-            "1": 1.2761433919270835,
-            "2": 1.2761433919270835,
-            "3": 1.2761433919270835
-        },
-        "gpu_utilization": {
-            "0": 0,
-            "1": 0,
-            "2": 0,
-            "3": 0
-        },
-        "mem_ratio": 2.5,
-        "n_cpu": 48,
-        "net_ratio(MBps)": 0.00019,
-        "node_role": "cloud",
-        "swap_ratio": 0
-    },
-    "172.27.142.247": {
-        "cpu_ratio": 5.9,
-        "gpu_mem": {
-            "0": 12.066474327674278
-        },
-        "gpu_utilization": {
-            "0": 0
-        },
-        "mem_ratio": 24.5,
-        "n_cpu": 4,
-        "net_ratio(MBps)": 0.00143,
-        "node_role": "edge",
-        "swap_ratio": 0
-    }
-        };
+    //     this.cluster_info = {
+    // "114.212.81.11": {
+    //     "cpu_ratio": 0.1,
+    //     "gpu_mem": {
+    //         "0": 1.2761433919270835,
+    //         "1": 1.2761433919270835,
+    //         "2": 1.2761433919270835,
+    //         "3": 1.2761433919270835
+    //     },
+    //     "gpu_utilization": {
+    //         "0": 0,
+    //         "1": 0,
+    //         "2": 0,
+    //         "3": 0
+    //     },
+    //     "mem_ratio": 2.5,
+    //     "n_cpu": 48,
+    //     "net_ratio(MBps)": 0.00019,
+    //     "node_role": "cloud",
+    //     "swap_ratio": 0
+    // },
+    // "172.27.142.247": {
+    //     "cpu_ratio": 5.9,
+    //     "gpu_mem": {
+    //         "0": 12.066474327674278
+    //     },
+    //     "gpu_utilization": {
+    //         "0": 0
+    //     },
+    //     "mem_ratio": 24.5,
+    //     "n_cpu": 4,
+    //     "net_ratio(MBps)": 0.00143,
+    //     "node_role": "edge",
+    //     "swap_ratio": 0
+    // }
+    //     };
         this.node_type_list = [
                 { key: "host", ui_value: "视频边端" },
                 { key: "edge", ui_value: "其他边端" },
@@ -561,6 +769,11 @@ export default{
             { key: "720p", ui_value: "1280x720" },
             { key: "1080p", ui_value: "1920x1080" },
         ];
+        // this.initChart();
+        // this.timer = setInterval(() => {
+        //   this.updateResultUrl();
+          this.updateResourceUrl();
+        // }, 8000);
     },
 }
 </script>
@@ -663,14 +876,14 @@ export default{
   margin: 0 auto; /* 水平居中 */
 }
 
-.available-node{
+.available-node-result{
   display: inline-block;
   margin: 20px;
   /* background-color: cadetblue; */
   width: 320px;
   border: 1px solid #5c5858;
   border-radius: 10px;
-  height: 120px;
+  height: 180px;
 }
 .centered-div {
   margin-top: 10px;
@@ -721,6 +934,11 @@ select {
   right: 10px;
   transform: translateY(-50%);
   font-size: 16px; /* 自定义箭头图标大小 */
+}
+.subli {
+  font-size: 18px;
+  margin-top: 10px;
+  padding: 0px;
 }
 </style>
 
