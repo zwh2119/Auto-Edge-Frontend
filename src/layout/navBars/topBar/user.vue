@@ -46,7 +46,7 @@
 			:width="300"
 			:persistent="false"
 		>
-			<UserNews />
+			<!-- <UserNews /> -->
 		</el-popover>
 		<div class="layout-navbars-breadcrumb-user-icon mr10" @click="onScreenfullClick">
 			<i

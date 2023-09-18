@@ -1,6 +1,7 @@
 <template>
     <div>
       <div class="content">
+        
         <!-- 选择视频流 -->
         <el-card shadow="hover" style="margin: 20px;">
           <div slot="header" style="font-size: 20px;font-weight: bold;">选择视频流</div>
@@ -55,75 +56,110 @@
         </el-card>
 
         <!-- 选择视频流处理步骤 -->
-        <el-card shadow="hover" style="margin: 20px; height: 250px;">
+        <!-- <el-card shadow="hover" style="margin: 20px; height: 250px;">
           <div slot="header" style="font-size: 20px;font-weight: bold; margin-bottom: 20px;">选择视频流处理步骤</div>
           <div>
+            <div class="custom-select">
+              <select v-model="selectedFlow">
+                <option value="" disabled selected>选择处理流水线</option>
+                <option 
+                  v-for="(flow,name) in flows"
+                  :key="name"
+                  :value="flow"
+                >
+                  {{ name }}
+                </option>
+              </select>
+              <span class="custom-arrow">&#9662;</span>
+            </div>
+            
+          </div> -->
+
+
+          <!-- <div>
             <div v-for="(serv, id) in servicesList" :key="id" style="display: inline-block; margin-right: 20px;">
               <el-button :type="buttonTypes[id]" :plain="isPlain[id]" @click="changeButtonType(id,serv)">{{ serv }}</el-button>
             </div>
-          </div>
+          </div> -->
           <!-- 已选择流水线 -->
-          <div slot="header" style="font-size: 18px;margin-top: 30px; margin-bottom: 20px;">已选择流水线</div>
+          <!-- <div slot="header" style="font-size: 18px;margin-top: 30px; margin-bottom: 20px;">已选择流水线</div>
           <div>
             <div v-for="(serv,id) in selectedServices" style="display: inline-block;">
-              <el-button type="primary" text bg>{{ serv }}</el-button>
+              <el-button type="primary" text bg>{{ serv }}</el-button> -->
               <!-- 显示箭头 -->
-              <span v-if="id < selectedServices.length - 1" class="arrow">➡</span>
-          </div>
+              <!-- <span v-if="id < selectedServices.length - 1" class="arrow">➡</span>
+          </div> -->
 
-          </div>
+          <!-- </div> -->
 
-        </el-card>
+        <!-- </el-card> -->
         
 
         <!-- 设置任务约束 -->
         <el-card shadow="hover" style="margin: 20px;">
           <div slot="header" style="font-size: 20px;font-weight: bold;">设置任务约束</div>
-          <div style="display: flex; align-items: center; margin-top: 20px;">
-            <!-- 优化模式 -->
+          <el-row>
+            <el-col :span="12">
             
-            <div style="flex: 1; display: flex; align-items: center;">
-                <span class="param" style="margin-right: 20px;">优化模式</span>
-                <!-- <el-select v-model="selectedMode" placeholder="Select">
-                  <el-option
-                    v-for="item in options"
-                    :key="item.value"
-                    :label="item.label"
-                    :value="item.value"
-                  />
-                </el-select> -->
-                <div class="custom-select">
-                  <select v-model="selectedMode">
-                    <option value="" disabled selected>选择优化模式</option>
-                    <option 
-                      v-for="item in options"
-                      :key="item.value"
-                      :value="item.value"
-                    >
-                      {{ item.label }}
-                    </option>
-                  </select>
-                  <span class="custom-arrow">&#9662;</span>
+              <div  style="flex: 1;margin-top: 20px;">
+                <!-- 处理流水线 -->
+                <div>
+                  <span class="param" style="margin-right: 20px;">选择处理流水线</span>
+                  <div class="custom-select">
+                    <select v-model="selectedFlow">
+                      <option value="" disabled selected>选择处理流水线</option>
+                      <option 
+                        v-for="(flow,name) in flows"
+                        :key="name"
+                        :value="flow"
+                      >
+                        {{ name }}
+                      </option>
+                    </select>
+                    <span class="custom-arrow">&#9662;</span>
+                  </div>
                 </div>
-            </div>
 
-            <!-- 优化参数 -->
-            <div style="flex: 1;">
-              <div>
-                <span class="param" style="margin-right: 20px;">时延约束</span>
-                <el-input v-model="delay_constraint" placeholder="输入时延约束" style="width: 100%; max-width: 200px;" />
-              </div>
-              <div style="margin-top: 10px;">
-                
-                <span class="param" style="margin-right: 20px;">精度约束</span>
-                <el-input v-model="acc_constraint" placeholder="输入精度约束" style="width: 100%; max-width: 200px;" />
-              </div>
-            </div>
+                <!-- 优化模式 -->
+                <div style="margin-top: 10px;">
+                  <span class="param" style="margin-right: 20px;">优化模式</span>
+                  <div class="custom-select" style="margin-left: 50px;">
+                    <select v-model="selectedMode">
+                      <option value="" disabled selected>选择优化模式</option>
+                      <option 
+                        v-for="item in options"
+                        :key="item.value"
+                        :value="item.value"
+                      >
+                        {{ item.label }}
+                      </option>
+                    </select>
+                    <span class="custom-arrow">&#9662;</span>
+                  </div>
 
-            <div style="flex: 1;">
-              <el-button type="primary" plain @click="submitText">提交任务</el-button>
-            </div>
-            </div>
+                </div>
+              </div>
+            
+            </el-col>
+            <el-col :span="12">
+              <div style="flex: 1;margin-top: 20px;">
+                <div>
+                  <span class="param" style="margin-right: 20px;">时延约束(s)</span>
+                  <el-input v-model="delay_constraint" placeholder="输入时延约束" style="width: 100%; max-width: 200px;margin-left: 63px;" />
+                </div>
+                <div style="margin-top: 10px;">
+                  
+                  <span class="param" style="margin-right: 20px;">精度约束(F1 Score)</span>
+                  <el-input v-model="acc_constraint" placeholder="输入精度约束" style="width: 100%; max-width: 200px;" />
+                </div>
+              </div>
+            </el-col>
+          </el-row>
+          
+          <!-- 提交任务 -->
+        <div style="display: flex; justify-content: center;margin-top: 20px;">
+          <el-button type="primary" plain @click="submitText">提交任务</el-button>
+        </div>
 
 
 
@@ -178,6 +214,11 @@ data() {
         // 分页控件
         itemsPerPage: 3, // 每页显示的数量
         currentPage: 1, // 当前页数
+
+        // flow list(套餐)
+        flows:{},
+        // 选择的flow
+        selectedFlow:null,
         
         };
     },
@@ -270,13 +311,15 @@ data() {
           this.inputText = {
           node_addr: this.selectedIp,
           video_id: parseInt(this.selectedVideoId),
-          pipeline: this.selectedServices,
+          // pipeline: this.selectedServices,
+          pipeline: this.selectedFlow,
           user_constraint: {
               delay: parseFloat(this.delay_constraint),
               accuracy: parseFloat(this.acc_constraint),
             },
           };
-          console.log(this.inputText)
+          // console.log(this.inputText);
+          console.log(this.selectedFlow);
 
           // let text = this.inputText.replace(/[\r\n\s]/g, ""); // remove all newlines and spaces
           let text = JSON.stringify(this.inputText);
@@ -366,6 +409,11 @@ data() {
     //   this.isPlain = new Array(this.servicesList.length).fill(true);
     // },
     mounted(){
+      // console.log("mounted!");
+      this.flows = {
+        "face_estimation":["face_detection","face_alignment"],
+        "car_detecion":['car_detection'],
+      };
       const submitJobs = sessionStorage.getItem("submit_jobs");
       if (submitJobs) {
         this.submit_jobs = JSON.parse(submitJobs);
@@ -491,7 +539,7 @@ margin-top: 20px;
 .custom-select {
   position: relative;
   display: inline-block;
-  width: 120px; /* 自定义宽度 */
+  width: 150px; /* 自定义宽度 */
   background-color: #f5f5f5; /* 自定义背景颜色 */
   border: 1px solid #ccc; /* 自定义边框样式 */
   border-radius: 4px; /* 自定义圆角 */

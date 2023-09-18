@@ -108,6 +108,22 @@ export const dynamicRoutes: Array<RouteRecordRaw> = [
 					icon: 'iconfont icon-ico_shuju',
 				},
 			}
+			,
+			{
+				path: '/content',
+				name: 'content',
+				component: () => import('/@/views/content/index.vue'),
+				meta: {
+					title: 'message.router.content',
+					isLink: '',
+					isHide: false,
+					isKeepAlive: true,
+					isAffix: false,
+					isIframe: false,
+					roles: ['admin', 'common'],
+					icon: 'iconfont icon-caidan',
+				},
+			}
 		],
 	},
 ];

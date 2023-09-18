@@ -79,189 +79,6 @@
         </el-row>
 
 
-        <!-- 运行时情境 -->
-        <div class="card-container">
-            <!-- 应用情境 -->
-            <el-card shadow="hover" class="card" style="flex: 1;">
-                <div slot="header" style="font-size: 20px;font-weight: bold; margin-bottom: 20px;">应用情境</div>
-                <!-- <div style="margin-bottom: 10px; font-size: 18px; font-weight: 400;">应用情境</div> -->
-                    <!-- <div
-                        class="info-h1-flex-text"
-                        v-for="(value, key) in modifiedRuntime"
-                    >
-                        <div>{{ key }}</div>
-                        <div>{{ value }}</div>
-                    </div> -->
-                    <div class="canvas-container">
-                        <div class="inner-div">
-                            <span>时延(s)</span>
-                            <canvas ref="delayCanvas" width="150" height="150"></canvas>
-                        </div>
-                        <div class="inner-div">
-                            <span>目标数量(个)</span>
-                            <canvas ref="objNumCanvas" width="150" height="150"></canvas>
-                        </div>
-                    </div>
-
-                    <div class="canvas-container">
-                        <div class="inner-div">
-                            <span>目标大小</span>
-                            <canvas ref="objSizeCanvas" width="150" height="150"></canvas>
-                        </div>
-                        <div class="inner-div">
-                            <span>场景稳定性</span>
-                            <canvas ref="objStableCanvas" width="150" height="150"></canvas>
-                        </div>
-                </div>
-
-                <div>
-                </div>
-            </el-card>
-            
-            <!-- 资源情境 -->
-            <el-card shadow="hover" class="card" style="flex: 1;">
-                <div slot="header"  style="font-size: 20px;font-weight: bold; margin-bottom: 20px;display: flex; align-items: center;">
-                    <span style="margin-right: 50px;">资源情境</span>
-                    <!-- <el-select v-model="selectedIp" placeholder="请选择IP地址" @change="showSelectedInfo">
-                        <el-option
-                            v-for="(info, ip) in cluster_info"
-                            :key="ip"
-                            :label="ip"
-                            :value="ip"
-                        ></el-option>
-                    </el-select> -->
-                    <div class="custom-select">
-                        <select v-model="selectedIp" @change="showSelectedInfo">
-                        <option value="" disabled selected>请选择IP地址</option>
-                        <option
-                            v-for="(info, ip) in cluster_info"
-                            :key="ip"
-                            :value="ip"
-                        >{{ ip }}</option>
-                        </select>
-                        <span class="custom-arrow">&#9662;</span>
-                    </div>
-                </div>
-                
-                    <div>
-                        <!-- 第一行 CPU利用率+内存利用率 -->
-                        <div class="canvas-container">
-                            <div class="inner-div">
-                                <span>CPU利用率</span>
-                                <canvas ref="cpuCanvas" width="150" height="150"></canvas>
-                            </div>
-                            <div class="inner-div">
-                                <span>内存利用率</span>
-                                <canvas ref="memCanvas" width="150" height="150"></canvas>
-                            </div>
-                        </div>
-                        
-                        <!-- 第二行 GPU利用率+网络带宽 -->
-                        <div class="canvas-container">
-                            <div class="inner-div">
-                                <span>GPU利用率</span>
-                                <!-- <div>{{ cluster_info[selectedIp]['gpu_utilization'] }}</div> -->
-                                <canvas ref="gpuCanvas" width="150" height="150"></canvas>
-                            </div>
-                            <div class="inner-div">
-                                <span>网络带宽(KB/s)</span>
-                                <!-- <div>{{ cluster_info[selectedIp]['net_ratio(MBps)'] }}</div> -->
-                                <canvas ref="netCanvas" width="150" height="150"></canvas>
-                            </div>
-                        </div>
-                    </div>
-                    
-            </el-card>
-        </div>
-
-        <!-- 任务调度配置 -->
-        <el-card shadow="hover" style="margin: 20px; height: 350px;">
-          <div slot="header" style="font-size: 20px;font-weight: bold; margin-bottom: 20px;">任务调度配置</div>
-          <div>
-        <div class="info-box" >
-          <!-- {{ plan }} -->
-          <div v-for="(h1_value, h1_key) in modifiedPlan" style="flex: 1;">
-            <div class="info-h1">{{ h1_key }}</div>
-            <div>
-              <div class="info-h1-flex-text" v-for="(h2_v, h2_k) in h1_value">
-                <div class="info-h2">{{ h2_k }}</div>
-
-                <!-- 以按钮方式显示特定配置 -->
-                <!-- 云边协同配置 -->
-                <!-- 1、flow_mapping: 本机、边缘、云端 -->
-                <div v-if="h1_key === '云边协同配置'" class="info-h2-flex-text">
-                  <el-radio-group
-                    direction="row"
-                    v-model="h1_value[h2_k]['node_role']"
-                    :disabled="true"
-                  >
-                    <el-radio-button
-                      class="user-radio"
-                      v-for="item in node_type_list"
-                      :label="item.key"
-                      >{{ item.ui_value }}</el-radio-button
-                    >
-                  </el-radio-group>
-                </div>
-                <!-- 视频配置 -->
-                <!-- 2、video_conf: 编解码 -->
-                <div v-else-if="h2_k === 'encoder'" class="info-h2-flex-text">
-                  <el-radio-group
-                    direction="row"
-                    v-model="h1_value[h2_k]"
-                    :disabled="true"
-                  >
-                    <el-radio-button
-                      class="user-radio"
-                      v-for="item in encoder_type_list"
-                      :label="item.key"
-                      >{{ item.ui_value }}</el-radio-button
-                    >
-                  </el-radio-group>
-                </div>
-                <!-- 3、video_conf: 帧率 -->
-                <div v-else-if="h2_k === 'fps'" class="info-h2-flex-text">
-                  <el-radio-group
-                    direction="row"
-                    v-model="h1_value[h2_k]"
-                    :disabled="true"
-                  >
-                    <el-radio-button
-                      class="user-radio"
-                      v-for="item in fps_type_list"
-                      :label="item.key"
-                      >{{ item.ui_value }}</el-radio-button
-                    >
-                  </el-radio-group>
-                </div>
-                <!-- 4、video_conf: 分辨率 -->
-                <div
-                  v-else-if="h2_k === 'resolution'"
-                  class="info-h2-flex-text"
-                >
-                  <el-radio-group
-                    direction="row"
-                    v-model="h1_value[h2_k]"
-                    :disabled="true"
-                  >
-                    <el-radio-button
-                      class="user-radio"
-                      v-for="item in resolution_type_list"
-                      :label="item.key"
-                      >{{ item.ui_value }}</el-radio-button
-                    >
-                  </el-radio-group>
-                </div>
-
-                <!-- 以文本方式显示其他h2内容 -->
-                <div v-else class="info-h2-flex-text">{{ h2_v }}</div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-          
-        </el-card>
 
     </div>
 </template>
@@ -317,6 +134,32 @@ export default{
         };
     },
     methods: {
+        // 绘制饼图
+        // drawTest(){
+        //   var chart = echarts.init(document.getElementById("chart2"));
+        //   const appended_result = this.appended_result;
+
+        //   const data = this.appended_result[this.appended_result.length - 1];
+        //   var keyList = Object.keys(data["count_result"]);
+        //   var valueList = Object.values(data["count_result"]);
+
+        //   var seriesData = [];
+        //   for(var i = 0;i < keyList.length;i ++){
+        //     seriesData.push({
+        //       value: valueList[i],
+        //       name: keyList[i],
+        //     });
+        //   }
+        //   var option = {
+        //     series: [
+        //       {
+        //         type: 'pie',
+        //         data: seriesData,
+        //       }
+        //     ]
+        //   };
+        //   chart.setOption(option);
+        // },
         // 绘制结果折线图
         drawResult(){
           if(!this.chart){
@@ -340,6 +183,7 @@ export default{
           for (var i = 0; i < appended_data.length; i++) {
             var keyList = Object.keys(appended_data[i]["count_result"]);
             for (var j = 0; j < keyList.length; j++) {
+              // 以抬头检测为例,将up total这些key都加入到resKeyList中
               if (resKeyList.indexOf(keyList[j]) == -1) {
                 resKeyList.push(keyList[j]);
               }
@@ -347,7 +191,7 @@ export default{
             // resKeyList = resKeyList.concat(keyList);
           }
           // resKeyList = [new Set(resKeyList)]
-          // console.log("resKeyList: " + resKeyList);
+          console.log("resKeyList: " + resKeyList);
           // var resKeyList = Object.keys(appended_data[0])
           for (var i = 0; i < resKeyList.length; i++) {
             var key = resKeyList[i];
@@ -469,30 +313,7 @@ export default{
             this.currentPage++;
           }
         },
-        // 获得最大值
-        getMaxKey(dict){
-          var maxv = 0;
-          var maxk = '';
-          for(const key in dict){
-            if(dict[key] > maxv){
-              maxv = dict[key];
-              maxk = key;
-            }
-          }
-          return [maxk,maxv];
-        },
-        // 资源情境
-        showSelectedInfo(){
-            // console.log(this.selectedIp);
-            this.drawCircle(this.$refs.cpuCanvas,this.cluster_info[this.selectedIp]['n_cpu']+'核',this.cluster_info[this.selectedIp]['cpu_ratio']*0.01,'#5b9bd5');
-            this.drawCircle(this.$refs.memCanvas,this.cluster_info[this.selectedIp]['mem_ratio'],this.cluster_info[this.selectedIp]['mem_ratio']*0.01,'#c5e0b4');
-            // 获得使用最多的卡的显存和使用率
-            const kv = this.getMaxKey(this.cluster_info[this.selectedIp]['gpu_mem_utilization']);
-            const gpu_num = kv[0];
-            const gpu_ratio = kv[1];
-            this.drawCircle(this.$refs.gpuCanvas,this.cluster_info[this.selectedIp]['gpu_mem_total'][gpu_num]+"GB",gpu_ratio*0.01,'#ffd966');
-            this.drawCircle(this.$refs.netCanvas,this.cluster_info[this.selectedIp]['net_ratio(MBps)'].toFixed(2)*1024,1,'#f4b183');
-        },
+        
         // 点击选择查询任务
         selectItem(job_id){
         //   console.log(job_id);
@@ -505,7 +326,7 @@ export default{
         updateResultUrl() {
           console.log(this.submit_job);
           const url = this.resultUrl + this.submit_job;
-          // console.log(url)
+          // console.log(url);
           const loading = ElLoading.service({
             lock: true,
             text: "Loading",
@@ -515,48 +336,29 @@ export default{
             .then((response) => response.json())
             .then((data) => {
               loading.close();
-              console.log(data);
+              // console.log(data);
               this.result = data;
               this.appended_result = this.result["appended_result"];
               this.runtime = this.result["latest_result"]["runtime"];
-              this.plan = this.result["latest_result"]["plan"];
-              
-
-              // 应用情景
-              this.delay = this.runtime["delay"].toFixed(2); //Cannot read properties of undefined (reading 'toFixed')
-              this.obj_n = this.runtime["obj_n"];
-              this.obj_size = this.runtime["obj_size"].toFixed(2);
-              this.obj_stable = this.runtime["obj_stable"];
-
+              this.plan = this.result["latest_result"]["plan"];         
+              console.log(this.runtime);
               // 应用情境
               if (this.runtime && this.runtime["delay"]) {
                 this.delay = this.runtime["delay"].toFixed(2);
-              } else {
-                this.delay = null;
               }
 
               if (this.runtime && this.runtime["obj_n"]) {
                 this.obj_n = Math.floor(this.runtime["obj_n"]);
-              } else {
-                this.obj_n = null; 
-              }
+              } 
 
               if (this.runtime && this.runtime["obj_size"]) {
                 this.obj_size = this.runtime["obj_size"].toFixed(2);
-              } else {
-                this.obj_size = null; 
               }
 
               if (this.runtime && this.runtime["obj_stable"]) {
                 this.obj_stable = this.runtime["obj_stable"];
-              } else {
-                this.obj_stable = null; 
               }
 
-              this.drawCircle(this.$refs.delayCanvas,this.delay,1,'#5b9bd5');
-              this.drawCircle(this.$refs.objNumCanvas,this.obj_n,1,'#c5e0b4');
-              this.drawCircle(this.$refs.objSizeCanvas,this.obj_size,1,'#ffd966');
-              this.drawCircle(this.$refs.objStableCanvas,this.obj_stable,1,'#f4b183');
               this.drawResult();
                 
             })
@@ -662,9 +464,7 @@ export default{
         },
     },
     mounted(){
-        // if (this.delay !== null) {
-        //     this.drawCircle();
-        // }
+        
         // 获取可查询的任务相关信息 存储在submit_jobs和job_info_dict中
         const submitJobs = sessionStorage.getItem("submit_jobs");
         if (submitJobs) {
@@ -676,103 +476,13 @@ export default{
             this.job_info_dict = JSON.parse(job_info);
             // console.log(this.job_info_dict);
         }
-        this.resource_display = ["cpu_ratio","mem_ratio","gpu_ratio","net_ratio(MBps)"],
-        // TO_REMOVE: 静态填充
-        // this.job_info_dict = { 
-        //     "GLOBAL_ID_1": 
-        //     { 
-        //         "job_id": "GLOBAL_ID_1", 
-        //         "selectedIp": "172.27.142.247:5001", 
-        //         "selectedVideoId": "1", 
-        //         "type": "people in meeting-room",
-        //          "mode": "latency", 
-        //          "delay_constraint": "0.6", 
-        //          "acc_constraint": "0.6" 
-        //     },
-        //     "GLOBAL_ID_2": 
-        //     { 
-        //         "job_id": "GLOBAL_ID_2", 
-        //         "selectedIp": "172.27.142.247:5002", 
-        //         "selectedVideoId": "2", 
-        //         "type": "people in meeting-room",
-        //          "mode": "latency", 
-        //          "delay_constraint": "0.6", 
-        //          "acc_constraint": "0.6" 
-        //     },
-        //     "GLOBAL_ID_3": 
-        //     { 
-        //         "job_id": "GLOBAL_ID_3", 
-        //         "selectedIp": "172.27.142.247:5003", 
-        //         "selectedVideoId": "3", 
-        //         "type": "people in meeting-room",
-        //          "mode": "latency", 
-        //          "delay_constraint": "0.6", 
-        //          "acc_constraint": "0.6" 
-        //     },
-        // },
-    //     this.cluster_info = {
-    // "114.212.81.11": {
-    //     "cpu_ratio": 0.1,
-    //     "gpu_mem": {
-    //         "0": 1.2761433919270835,
-    //         "1": 1.2761433919270835,
-    //         "2": 1.2761433919270835,
-    //         "3": 1.2761433919270835
-    //     },
-    //     "gpu_utilization": {
-    //         "0": 0,
-    //         "1": 0,
-    //         "2": 0,
-    //         "3": 0
-    //     },
-    //     "mem_ratio": 2.5,
-    //     "n_cpu": 48,
-    //     "net_ratio(MBps)": 0.00019,
-    //     "node_role": "cloud",
-    //     "swap_ratio": 0
-    // },
-    // "172.27.142.247": {
-    //     "cpu_ratio": 5.9,
-    //     "gpu_mem": {
-    //         "0": 12.066474327674278
-    //     },
-    //     "gpu_utilization": {
-    //         "0": 0
-    //     },
-    //     "mem_ratio": 24.5,
-    //     "n_cpu": 4,
-    //     "net_ratio(MBps)": 0.00143,
-    //     "node_role": "edge",
-    //     "swap_ratio": 0
-    // }
-    //     };
-        this.node_type_list = [
-                { key: "host", ui_value: "视频边端" },
-                { key: "edge", ui_value: "其他边端" },
-                { key: "cloud", ui_value: "云端" },
-                ];
-        this.encoder_type_list = [
-            { key: "H264", ui_value: "H264" },
-            { key: "JPEG", ui_value: "JPEG" },
-            { key: "x", ui_value: "..." },
-            ];
-        this.fps_type_list = [
-            { key: 1, ui_value: "1" },
-            { key: 5, ui_value: "5" },
-            { key: 10, ui_value: "10" },
-            { key: 20, ui_value: "20" },
-            { key: 30, ui_value: "30" },
-            ];
-        this.resolution_type_list = [
-            { key: "360p", ui_value: "480x360" },
-            { key: "480p", ui_value: "640x480" },
-            { key: "720p", ui_value: "1280x720" },
-            { key: "1080p", ui_value: "1920x1080" },
-        ];
+        this.resource_display = ["cpu_ratio","mem_ratio","gpu_ratio","net_ratio(MBps)"];
+        
+        // this.drawTest();
         // this.initChart();
         // this.timer = setInterval(() => {
         //   this.updateResultUrl();
-          this.updateResourceUrl();
+        //   this.updateResourceUrl();
         // }, 8000);
     },
 }
