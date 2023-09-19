@@ -105,15 +105,16 @@
                 <!-- 处理流水线 -->
                 <div>
                   <span class="param" style="margin-right: 20px;">选择处理流水线</span>
+                  
                   <div class="custom-select">
                     <select v-model="selectedFlow">
                       <option value="" disabled selected>选择处理流水线</option>
                       <option 
-                        v-for="(flow,name) in flows"
-                        :key="name"
-                        :value="flow"
+                        v-for="item in flows"
+                        :key="item['dag_name']"
+                        :value="item['dag']"
                       >
-                        {{ name }}
+                        {{ item['dag_name'] }}
                       </option>
                     </select>
                     <span class="custom-arrow">&#9662;</span>
@@ -216,9 +217,10 @@ data() {
         currentPage: 1, // 当前页数
 
         // flow list(套餐)
-        flows:{},
+        flows:[],
         // 选择的flow
         selectedFlow:null,
+        get_dag_url:null,
         
         };
     },
@@ -279,6 +281,20 @@ data() {
             .catch((err) => {
               errHandler(err);
             });
+        },
+
+        // 获取已有的dag套餐
+        getDags(){
+          fetch('/serv/get-dag-workflows-api')
+          .then(response => response.json())
+          .then(data => {
+            // console.log(data);
+            this.flows = data;
+            console.log(this.flows)
+          })
+          .catch(error =>{
+            errHandler(err);
+          });
         },
 
         // 选择视频流
@@ -410,10 +426,10 @@ data() {
     // },
     mounted(){
       // console.log("mounted!");
-      this.flows = {
-        "face_estimation":["face_detection","face_alignment"],
-        "car_detecion":['car_detection'],
-      };
+      // this.flows = {
+      //   "face_estimation":["face_detection","face_alignment"],
+      //   "car_detecion":['car_detection'],
+      // };
       const submitJobs = sessionStorage.getItem("submit_jobs");
       if (submitJobs) {
         this.submit_jobs = JSON.parse(submitJobs);
@@ -427,6 +443,7 @@ data() {
       }
       
       this.getInfo();
+      this.getDags();
       // 静态填充
         this.info = 
             {

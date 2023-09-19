@@ -56,13 +56,11 @@
 
 
         <!-- 视频任务结果 -->
-        <el-row>
+        <!-- <el-row>
             <el-col :span="10">
                 <el-card shadow="hover" style="margin: 20px; height: 350px;">
                     <div slot="header" style="font-size: 20px;font-weight: bold; margin-bottom: 20px;">原始视频流</div>
-                    <!-- 原始视频流 -->
-                    <div style="width: 80%; height: calc(100% - 40px);"> <!-- 40px是header的高度 -->
-                        <!-- TODO: img大小设置 -->
+                    <div style="width: 80%; height: calc(100% - 40px);"> 
                         <img :src="videoUrl + selected" style="width: 100%; height: 80%;" />
                     </div>
                 </el-card>
@@ -71,12 +69,42 @@
             <el-col :span="14">
                 <el-card shadow="hover" style="margin: 20px; height: 350px; margin-left: 0;">
                     <div slot="header" style="font-size: 20px;font-weight: bold; margin-bottom: 20px;">执行结果</div>
-                    <!-- 结果绘图 -->
                     <div id="result" style="width: 600px;height:250px;"></div>
                     
                 </el-card>   
             </el-col>
-        </el-row>
+        </el-row> -->
+
+        <!-- TODO:
+          1.点灭以后不显示 √
+          2.美化样式 √
+          3.整体布局
+        -->
+        <el-card shadow="hover" style="margin: 20px;">
+          <!-- 原始视频流显示 -->
+          <el-row>
+            <el-col :span="12">
+              <el-checkbox @change="showPic()">原始视频流</el-checkbox>
+              <div  v-show="showOriginal" style="width: 400px; height: 250px; margin-bottom: 20px;">
+                  <img :src="videoUrl + selected" style="width: 100%; height: 80%;" />
+              </div>
+            </el-col>
+            <el-col :span="12">
+              <el-checkbox @change="drawResult()">总览</el-checkbox>
+              <div v-show="showOverview" id="result" style="width: 400px; height: 250px;"></div>
+            </el-col>
+          </el-row>
+
+          <el-row>
+            <el-col :span="12" v-for="(item, idx) in keyList" :key="idx">
+              <!-- 问题:当需要显示的时候,v-if即使为true也还没开始渲染 -->
+              <el-checkbox :label="item" @change="toggleChart(item)">{{ item }}</el-checkbox>
+              <div v-show="showChart(item)" :id="item" style="width: 400px; height: 250px;"></div>
+            </el-col>
+          </el-row>
+
+
+        </el-card>
 
 
 
@@ -130,6 +158,13 @@ export default{
             itemsPerPage: 3, // 每页显示的数量
             currentPage: 1, // 当前页数
 
+            // checkbox相关
+            keyList:null,
+            checkedKey:null,
+            showOriginal:false,
+            selectedCharts:[],
+            showOverview:false,
+
             
         };
     },
@@ -160,111 +195,188 @@ export default{
         //   };
         //   chart.setOption(option);
         // },
-        // 绘制结果折线图
-        drawResult(){
-          if(!this.chart){
-            var chart = echarts.init(document.getElementById('result'));
-            this.chart = chart;
+        showPic(){
+          if(!this.showOriginal){
+            this.showOriginal = true;
+          }else{
+            this.showOriginal = !this.showOriginal;
           }
-          const yKey = Object.keys(this.appended_result[0])[0]; // 获取第一个键名作为纵坐标的键名
+        },
+
+        toggleChart(itemKey){
+          // 已经被选择则清除
+          // console.log(this.selectedCharts);
+          if (this.selectedCharts.includes(itemKey)) {
+            this.selectedCharts = this.selectedCharts.filter(item => item !== itemKey);
+            // console.log("尝试清除");
+            echarts.dispose(document.getElementById(itemKey));
+          } else {
+            this.selectedCharts.push(itemKey);
+            this.showSelectedResult(itemKey);
+          }
+          console.log(this.selectedCharts);
+
+          // 没被选择则加入到list中
+        },
+        showChart(itemKey){
+          return this.selectedCharts.includes(itemKey);
+        },
+
+        showSelectedResult(itemKey){
+          // console.log(itemKey);
+          // this.updateResultUrl();
+          var chart = echarts.init(document.getElementById(itemKey));
+          var xAsixName = "n_loop";
 
           const data = this.appended_result.map((item) => ({
-            x: item.n_loop,
-            y: item[yKey], // 使用纵坐标的键名来获取对应的值
-          }));
-
-          const appended_data = this.appended_result;
-
-          // 获取追加结果中key非n_loop的数据
-          var xAsixName = "n_loop";
-          var seriesData = {};
-          var resKeyList = [];
-          // console.log("appended_data length: " + appended_data.length);
-          for (var i = 0; i < appended_data.length; i++) {
-            var keyList = Object.keys(appended_data[i]["count_result"]);
-            for (var j = 0; j < keyList.length; j++) {
-              // 以抬头检测为例,将up total这些key都加入到resKeyList中
-              if (resKeyList.indexOf(keyList[j]) == -1) {
-                resKeyList.push(keyList[j]);
-              }
-            }
-            // resKeyList = resKeyList.concat(keyList);
-          }
-          // resKeyList = [new Set(resKeyList)]
-          console.log("resKeyList: " + resKeyList);
-          // var resKeyList = Object.keys(appended_data[0])
-          for (var i = 0; i < resKeyList.length; i++) {
-            var key = resKeyList[i];
-            if (key !== xAsixName) {
-              seriesData[key] = [];
-            }
-          }
-          // console.log("init seriesData keys: " + Object.keys(seriesData));
-          // 生成各key的数据序列
-          for (var i = 0; i < appended_data.length; i++) {
-            var frameInfo = appended_data[i]["count_result"];
-            for (var j in frameInfo) {
-              var key = j;
-              var value = frameInfo[j];
-              if (key !== xAsixName) {
-                seriesData[key].push(value);
-              }
-            }
-          }
-          // 生成series列表和与其对应的legend列表
-          var seriesList = [];
-          var legendList = [];
-          // console.log("seriesData entries: " + Object.entries(seriesData));
-          for (var ent of Object.entries(seriesData)) {
-            // console.log("ent[0]=" + ent[0]);
-            // console.log("ent[1]=" + ent[1]);
-            legendList.push(ent[0]);
-            seriesList.push({
-              name: ent[0],
-              type: "line",
-              // type: "bar",
-              // stack: "stack",
-              label: {
-                show: true,
-                position: "top",
-                color: "black",
-                fontSize: 12,
-                formatter: function (d) {
-                  return d.data;
-                },
-              },
-              data: ent[1],
-            });
-          }
-
+            x:item.n_loop,
+            y:item.count_result[itemKey],
+          }))
+          // console.log(data);
           const option = {
-            grid: {
-              bottom: "10%",
-              right: "15%",
-              top: "30%",
-              left: "15%",
-            },
             xAxis: {
-              type: "category",
+              type: 'category',
               data: data.map((item) => item.x), // 使用映射后的横坐标数据
-              name: "帧数",
+              name: "帧数"
             },
-            yAxis: {
-              type: "value",
-              name: "检测到的数量",
+            yAxis:{
+              type:'value',
+              name:'检测到的数量'
             },
-            legend: {
-              data: legendList,
-            },
-            series: seriesList,
-            // series: [
-            //   {
-            //     type: "line",
-            //     data: data.map((item) => item.y), // 使用映射后的纵坐标数据
-            //   },
-            // ],
+            series:[
+              {
+                data: data.map((item) => item.y),
+                type:'line',
+                label:{
+                  show:true,
+                  position:'bottom',
+                  textStyle:{
+                    fontSize:12
+                  }
+                }
+              }
+            ],
+            // legend:{
+            //   data:[key],
+            // }
+            
           };
-          this.chart.setOption(option,true);
+          chart.setOption(option);
+        },
+
+        // 绘制结果折线图
+        drawResult(){
+          this.updateResultUrl();
+          this.showOverview = !this.showOverview;
+          // console.log(this.showOverview);
+          if(this.showOverview){
+            const chart = echarts.init(document.getElementById('result'));
+
+            const yKey = Object.keys(this.appended_result[0])[0]; // 获取第一个键名作为纵坐标的键名
+
+            const data = this.appended_result.map((item) => ({
+              x: item.n_loop,
+              y: item[yKey], // 使用纵坐标的键名来获取对应的值
+            }));
+
+            const appended_data = this.appended_result;
+
+            // 获取追加结果中key非n_loop的数据
+            var xAsixName = "n_loop";
+            var seriesData = {};
+            var resKeyList = [];
+            // console.log("appended_data length: " + appended_data.length);
+            for (var i = 0; i < appended_data.length; i++) {
+              var keyList = Object.keys(appended_data[i]["count_result"]);
+              for (var j = 0; j < keyList.length; j++) {
+                // 以抬头检测为例,将up total这些key都加入到resKeyList中
+                if (resKeyList.indexOf(keyList[j]) == -1) {
+                  resKeyList.push(keyList[j]);
+                }
+              }
+              // resKeyList = resKeyList.concat(keyList);
+            }
+            // resKeyList = [new Set(resKeyList)]
+            console.log("resKeyList: " + resKeyList);
+            // var resKeyList = Object.keys(appended_data[0])
+            for (var i = 0; i < resKeyList.length; i++) {
+              var key = resKeyList[i];
+              if (key !== xAsixName) {
+                seriesData[key] = [];
+              }
+            }
+            // console.log("init seriesData keys: " + Object.keys(seriesData));
+            // 生成各key的数据序列
+            for (var i = 0; i < appended_data.length; i++) {
+              var frameInfo = appended_data[i]["count_result"];
+              for (var j in frameInfo) {
+                var key = j;
+                var value = frameInfo[j];
+                if (key !== xAsixName) {
+                  seriesData[key].push(value);
+                }
+              }
+            }
+            // 生成series列表和与其对应的legend列表
+            var seriesList = [];
+            var legendList = [];
+            // console.log("seriesData entries: " + Object.entries(seriesData));
+            for (var ent of Object.entries(seriesData)) {
+              // console.log("ent[0]=" + ent[0]);
+              // console.log("ent[1]=" + ent[1]);
+              legendList.push(ent[0]);
+              seriesList.push({
+                name: ent[0],
+                type: "line",
+                // type: "bar",
+                // stack: "stack",
+                label: {
+                  show: true,
+                  position: "top",
+                  color: "black",
+                  fontSize: 12,
+                  formatter: function (d) {
+                    return d.data;
+                  },
+                },
+                data: ent[1],
+              });
+            }
+
+            const option = {
+              grid: {
+                bottom: "10%",
+                right: "15%",
+                top: "30%",
+                left: "15%",
+              },
+              xAxis: {
+                type: "category",
+                data: data.map((item) => item.x), // 使用映射后的横坐标数据
+                name: "帧数",
+              },
+              yAxis: {
+                type: "value",
+                name: "检测到的数量",
+              },
+              legend: {
+                data: legendList,
+              },
+              series: seriesList,
+              // series: [
+              //   {
+              //     type: "line",
+              //     data: data.map((item) => item.y), // 使用映射后的纵坐标数据
+              //   },
+              // ],
+            };
+            // console.log("尝试画图...");
+            chart.setOption(option,true);
+          }else{
+            // console.log('尝试清除...');
+            echarts.dispose(document.getElementById('result'));
+          }
+          
 
         },
         // 绘制圆环
@@ -321,10 +433,23 @@ export default{
           this.submit_job = job_id;
           this.updateResultUrl();
         },
-
+        updateKeyList(){
+          // 获取appended_result中的key值
+          const data = this.appended_result;
+          const resKeyList = [];
+          for(var i = 0;i < data.length;i ++){
+            var keylist =  Object.keys(data[i]['count_result']);
+            for(var j = 0;j < keylist.length;j ++){
+              if(resKeyList.indexOf(keylist[j]) == -1){
+                resKeyList.push(keylist[j]);
+              }
+            }
+          }
+          this.keyList = resKeyList;
+        },
         // 查询结果
         updateResultUrl() {
-          console.log(this.submit_job);
+          // console.log(this.submit_job);
           const url = this.resultUrl + this.submit_job;
           // console.log(url);
           const loading = ElLoading.service({
@@ -341,7 +466,8 @@ export default{
               this.appended_result = this.result["appended_result"];
               this.runtime = this.result["latest_result"]["runtime"];
               this.plan = this.result["latest_result"]["plan"];         
-              console.log(this.runtime);
+              // console.log(this.runtime);
+
               // 应用情境
               if (this.runtime && this.runtime["delay"]) {
                 this.delay = this.runtime["delay"].toFixed(2);
@@ -358,8 +484,9 @@ export default{
               if (this.runtime && this.runtime["obj_stable"]) {
                 this.obj_stable = this.runtime["obj_stable"];
               }
-
-              this.drawResult();
+              
+              this.updateKeyList();
+              // this.drawResult();
                 
             })
             .catch((error) => {
@@ -478,12 +605,215 @@ export default{
         }
         this.resource_display = ["cpu_ratio","mem_ratio","gpu_ratio","net_ratio(MBps)"];
         
+        this.appended_result = [
+        {
+            "count_result": {
+                "total": 19,
+                "up": 16
+            },
+            "delay": 0.22060694013323104,
+            "execute_flag": true,
+            "frame_id": 774,
+            "n_loop": 63,
+            "proc_resource_info_list": [
+                {
+                    "cpu_util_limit": 1,
+                    "cpu_util_use": 0.27425,
+                    "latency": 1.1754405498504639,
+                    "pid": 11065
+                }
+            ]
+        },
+        {
+            "count_result": {
+                "total": 18,
+                "up": 15
+            },
+            "delay": 0.20396453993661062,
+            "execute_flag": true,
+            "frame_id": 780,
+            "n_loop": 64,
+            "proc_resource_info_list": [
+                {
+                    "cpu_util_limit": 1,
+                    "cpu_util_use": 0.27399999999999997,
+                    "latency": 1.0766024589538574,
+                    "pid": 11065
+                }
+            ]
+        },
+        {
+            "count_result": {
+                "total": 16,
+                "up": 12
+            },
+            "delay": 0.18409783499581472,
+            "execute_flag": true,
+            "frame_id": 786,
+            "n_loop": 65,
+            "proc_resource_info_list": [
+                {
+                    "cpu_util_limit": 1,
+                    "cpu_util_use": 0.27949999999999997,
+                    "latency": 0.9475843906402588,
+                    "pid": 11065
+                }
+            ]
+        },
+        {
+            "count_result": {
+                "total": 19,
+                "up": 16
+            },
+            "delay": 0.21081665584019255,
+            "execute_flag": true,
+            "frame_id": 792,
+            "n_loop": 66,
+            "proc_resource_info_list": [
+                {
+                    "cpu_util_limit": 1,
+                    "cpu_util_use": 0.27725,
+                    "latency": 1.1265530586242676,
+                    "pid": 11065
+                }
+            ]
+        },
+        {
+            "count_result": {
+                "total": 17,
+                "up": 16
+            },
+            "delay": 0.21186903544834684,
+            "execute_flag": true,
+            "frame_id": 798,
+            "n_loop": 67,
+            "proc_resource_info_list": [
+                {
+                    "cpu_util_limit": 1,
+                    "cpu_util_use": 0.26975,
+                    "latency": 1.1213617324829102,
+                    "pid": 11065
+                }
+            ]
+        },
+        {
+            "count_result": {
+                "total": 19,
+                "up": 14
+            },
+            "delay": 0.21648645401000977,
+            "execute_flag": true,
+            "frame_id": 804,
+            "n_loop": 68,
+            "proc_resource_info_list": [
+                {
+                    "cpu_util_limit": 1,
+                    "cpu_util_use": 0.273,
+                    "latency": 1.1257836818695068,
+                    "pid": 11065
+                }
+            ]
+        },
+        {
+            "count_result": {
+                "total": 18,
+                "up": 16
+            },
+            "delay": 0.21124557086399626,
+            "execute_flag": true,
+            "frame_id": 810,
+            "n_loop": 69,
+            "proc_resource_info_list": [
+                {
+                    "cpu_util_limit": 1,
+                    "cpu_util_use": 0.276,
+                    "latency": 1.0686159133911133,
+                    "pid": 11065
+                }
+            ]
+        },
+        {
+            "count_result": {
+                "total": 20,
+                "up": 15
+            },
+            "delay": 0.21829724311828613,
+            "execute_flag": true,
+            "frame_id": 816,
+            "n_loop": 70,
+            "proc_resource_info_list": [
+                {
+                    "cpu_util_limit": 1,
+                    "cpu_util_use": 0.271,
+                    "latency": 1.180079460144043,
+                    "pid": 11065
+                }
+            ]
+        },
+        {
+            "count_result": {
+                "total": 20,
+                "up": 15
+            },
+            "delay": 0.21993769918169295,
+            "execute_flag": true,
+            "frame_id": 822,
+            "n_loop": 71,
+            "proc_resource_info_list": [
+                {
+                    "cpu_util_limit": 1,
+                    "cpu_util_use": 0.27575,
+                    "latency": 1.1873185634613037,
+                    "pid": 11065
+                }
+            ]
+        },
+        {
+            "count_result": {
+                "total": 19,
+                "up": 15
+            },
+            "delay": 0.2089878831590925,
+            "execute_flag": true,
+            "frame_id": 828,
+            "n_loop": 72,
+            "proc_resource_info_list": [
+                {
+                    "cpu_util_limit": 1,
+                    "cpu_util_use": 0.27949999999999997,
+                    "latency": 1.1177542209625244,
+                    "pid": 11065
+                }
+            ]
+        },
+        {
+            "count_result": {
+                "total": 18,
+                "up": 14
+            },
+            "delay": 0.20454134259905135,
+            "execute_flag": true,
+            "frame_id": 834,
+            "n_loop": 73,
+            "proc_resource_info_list": [
+                {
+                    "cpu_util_limit": 1,
+                    "cpu_util_use": 0.27425,
+                    "latency": 1.0840375423431396,
+                    "pid": 11065
+                }
+            ]
+        }
+    ];
+      this.updateKeyList();
+
         // this.drawTest();
         // this.initChart();
         // this.timer = setInterval(() => {
         //   this.updateResultUrl();
         //   this.updateResourceUrl();
         // }, 8000);
+      
     },
 }
 </script>
@@ -602,8 +932,9 @@ export default{
   
 }
 .selected{
-  background-color: rgb(96, 158, 254);
-  color:white;
+  /* background-color: rgb(96, 158, 254);
+  color:white; */
+  background-color: #deebf7;
 }
 .canvas-container {
     display: flex;

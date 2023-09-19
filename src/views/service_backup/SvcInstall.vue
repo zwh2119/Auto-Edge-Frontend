@@ -19,8 +19,8 @@
           <h3>选择服务代码</h3>
         </div>
         <div>
-          <el-button type="info" round @click="addFileInput">+</el-button>
-          <el-button type="info" round @click="removeFileInput">-</el-button>
+          <el-button type="info" plain @click="addFileInput">+</el-button>
+          <el-button type="info" plain @click="removeFileInput">-</el-button>
         </div>
         <br>
         <div v-for="(fileInput, index) in fileInputs" :key="index">
@@ -44,19 +44,11 @@
               "
             />
           </div>
-          <!-- <div>
-            <input
-              ref="codeCtx"
-              type="file"
-              accept=".json"
-              @change=""
-            />
-          </div> -->
         </div>
   
         <!-- <el-button type="primary" plain native-type="submit">Submit</el-button> -->
         <div>
-          <el-button type="primary" round native-type="submit" :loading="loading"
+          <el-button type="primary" plain native-type="submit" :loading="loading"
             >安装服务</el-button>
         </div>
       </form>
@@ -109,6 +101,7 @@
           this.loading = false;
           alert("上传超时，提交失败！");
         }, 30000);
+  
         fetch("/serv/upload-json-and-codefiles-api", {
           method: "POST",
           body: formData,
@@ -183,7 +176,6 @@
 
   .el-button:first-child {
     margin-left: 0;
-    
     
   }
 </style>

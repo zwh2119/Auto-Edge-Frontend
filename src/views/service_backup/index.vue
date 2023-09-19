@@ -26,33 +26,18 @@
 				</div>
 			</el-col>
 	</el-row>
-	<el-row :gutter="15" class="home-card-two mb15 dag-manage">
-			<el-col :xs="24" :sm="24" :md="24" :lg="24" :xl="24">
-				<div class="home-card-item">
-					<div style="height: 100%" >
-                        <div class="flex-margin flex w100">
-                            <div class="flex-auto">
-                                <DagManage/>
-                            </div>
-					    </div>
-                    </div>
-				</div>
-			</el-col>
-		</el-row>
 </div>
 </template>
 
 <script>
 import SvcInstall from './SvcInstall.vue'
 import SvcQuery from './SvcQuery.vue'
-import DagManage from './DagManage.vue'
 import { reactive } from 'vue'
 
 export default {
     components: {
         SvcInstall,
-        SvcQuery,
-		DagManage
+        SvcQuery
     }
 }
 
@@ -60,8 +45,6 @@ export default {
 
 <style scoped lang="scss">
 $homeNavLengh: 8;
-
-
 .home-container {
 	overflow: hidden;
 	.home-card-one,
@@ -111,7 +94,7 @@ $homeNavLengh: 8;
 	.home-card-two,
 	.home-card-three {
 		.home-card-item {
-			height: 80vh;
+			height: 85vh;
 			width: 100%;
 			overflow: scroll;
 			.home-monitor {
@@ -145,13 +128,6 @@ $homeNavLengh: 8;
 					}
 				}
 			}
-		}
-	}
-	.dag-manage {
-		.home-card-item {
-			height: 120vh;
-			width: 100%;
-			overflow: scroll;
 		}
 	}
 }
