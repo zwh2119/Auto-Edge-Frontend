@@ -82,7 +82,7 @@
         -->
         <el-card shadow="hover" style="margin: 20px;">
           <!-- 原始视频流显示 -->
-          <el-row>
+          <!-- <el-row>
             <el-col :span="12">
               <el-checkbox @change="showPic()">原始视频流</el-checkbox>
               <div  v-show="showOriginal" style="width: 400px; height: 250px; margin-bottom: 20px;">
@@ -97,11 +97,27 @@
 
           <el-row>
             <el-col :span="12" v-for="(item, idx) in keyList" :key="idx">
-              <!-- 问题:当需要显示的时候,v-if即使为true也还没开始渲染 -->
               <el-checkbox :label="item" @change="toggleChart(item)">{{ item }}</el-checkbox>
               <div v-show="showChart(item)" :id="item" style="width: 400px; height: 250px;"></div>
             </el-col>
-          </el-row>
+          </el-row> -->
+
+          <div>
+            <el-checkbox @change="showPic()">原始视频流</el-checkbox>
+            <el-checkbox v-for="(item, idx) in keyList" :key="idx" :label="item" @change="toggleChart(item)">{{ item }}</el-checkbox>
+          </div>
+
+          <!-- 画布容器 -->
+          <div>
+            <div v-show="showOriginal" style="width: 400px; height: 250px; margin-top: 20px;float: left;">
+              <img :src="videoUrl + selected" style="width: 100%; height: 90%;" />
+            </div>
+            
+            <div v-for="(item, idx) in keyList" :key="idx" style="float: left;">
+              <div v-show="showChart(item)" :id="item" style="width: 400px; height: 250px; margin-top: 20px;"></div>
+            </div>
+            
+          </div>
 
 
         </el-card>
@@ -201,6 +217,7 @@ export default{
           }else{
             this.showOriginal = !this.showOriginal;
           }
+          console.log(this.showOriginal);
         },
 
         toggleChart(itemKey){
@@ -256,6 +273,10 @@ export default{
                 }
               }
             ],
+            title:{
+              show:true,
+              text: itemKey,
+            }
             // legend:{
             //   data:[key],
             // }
@@ -436,6 +457,7 @@ export default{
         updateKeyList(){
           // 获取appended_result中的key值
           const data = this.appended_result;
+          console.log(data);
           const resKeyList = [];
           for(var i = 0;i < data.length;i ++){
             var keylist =  Object.keys(data[i]['count_result']);
@@ -466,7 +488,7 @@ export default{
               this.appended_result = this.result["appended_result"];
               this.runtime = this.result["latest_result"]["runtime"];
               this.plan = this.result["latest_result"]["plan"];         
-              // console.log(this.runtime);
+              console.log(this.runtime);
 
               // 应用情境
               if (this.runtime && this.runtime["delay"]) {
@@ -484,10 +506,17 @@ export default{
               if (this.runtime && this.runtime["obj_stable"]) {
                 this.obj_stable = this.runtime["obj_stable"];
               }
-              
+              // console.log("test");
+
+              // 出问题:
+              // TypeError: Cannot convert undefined or null to object
+              // at Function.keys (<anonymous>)
+              // at Proxy.updateKeyList (index.vue:462:35)
+              // at index.vue:509:20
               this.updateKeyList();
+
               // this.drawResult();
-                
+              // console.log("test2");
             })
             .catch((error) => {
               console.log(error);

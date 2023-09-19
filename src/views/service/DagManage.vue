@@ -47,7 +47,7 @@
         <br>
 
         <div>
-          <el-button round @click="handleEditSubmit">提交更改</el-button>
+          <el-button type="primary" round @click="handleEditSubmit">提交更改</el-button>
           <!-- <el-button round>修改</el-button>
           <el-button round>删除</el-button> -->
         </div>
@@ -63,6 +63,21 @@
                 <br>
                 <br>
                 <div class="new-dag-font-style">dag: </div>
+
+                <ul style="list-style-type: none" class="svc-container">
+                  <li
+                    v-for="(service, index) in services"
+                    :key="index"
+                    class="svc-item"
+                  >
+                    <el-button
+                      :label="service"
+                      @click="putSvcIntoList(service)"
+                      >{{ service }}</el-button>
+                    <!-- <el-divider /> -->
+                  </li>
+                </ul>
+
                 <el-input v-model="newInputDag" placeholder="[]" />
 
 
@@ -70,11 +85,12 @@
         <br/>
 
         <div>
-          <el-button round @click="handleNewSubmit">新增Dag</el-button>
+          <el-button type="primary" round @click="handleNewSubmit">新增Dag</el-button>
           <!-- <el-button round>修改</el-button>
           <el-button round>删除</el-button> -->
         </div>
-        
+
+
 
     </div>
 </template>
@@ -92,6 +108,7 @@ export default {
     },
     data(){
         return{
+            services: [],
             editInput: '',
             newInputName: '',
             newInputDag: '',
@@ -148,7 +165,6 @@ export default {
             this.newInputDag = '';
         },
         getDagList(){
-            // fetch('http://127.0.0.1:5500/get-dag-workflows-api') 
             fetch('/serv/get-dag-workflows-api') 
             .then(response => response.json())
             .then(data => {
@@ -164,7 +180,6 @@ export default {
           this.getDagList();
         },
         updateDagList() {
-          // fetch('http://127.0.0.1:5500/update-dag-workflows-api', {
           fetch('/serv/update-dag-workflows-api', {
             method: 'POST',
             headers: {
@@ -179,7 +194,28 @@ export default {
           .catch(error => {
             console.error('Error sending data:', error);
           });
-        }
+        },
+        async getServiceList() {
+          const response = await fetch("/serv/get_service_list");
+          const data = await response.json();
+          // const data = ["face_detection","face_alignment","car_detection","helmet_detection","ixpe_preprocess","ixpe_sr_and_pc","ixpe_edge_observe"]
+          this.services = data;
+          // console.log(this.services);
+      },
+      putSvcIntoList(service){
+        service = "\"" + service + "\""
+        if(this.newInputDag == ''){
+          this.newInputDag = '[' + service + ']'
+        }else{
+          service = ',' + service;
+          const lastBracketIndex = this.newInputDag.lastIndexOf(']');
+          if (lastBracketIndex !== -1) {
+            this.newInputDag = this.newInputDag.slice(0, lastBracketIndex) + service + this.newInputDag.slice(lastBracketIndex);
+          } else {
+            this.newInputDag += service;
+          }   
+      }
+    }
   },
   mounted() {
           // 初次加载数据
@@ -189,6 +225,9 @@ export default {
           setInterval(() => {
             this.fetchData();
           }, 5000); 
+
+          this.getServiceList();
+          setInterval(this.getServiceList, 5000);
         },
 };
 </script>
@@ -255,6 +294,29 @@ input[type="file"] {
     font-size: 16px;
     margin-bottom: 20px;
     font-weight: bold;
+}
+
+.svc-container {
+    display: flex;
+    flex-wrap: wrap;
+    padding: 5px; /* 可根据需要调整 */
+    list-style-type: none;
+}
+
+.svc-item {
+    margin: 2px; /* 可根据需要调整 */
+    padding: 2px; /* 可根据需要调整 */
+    border-radius: 10px; /* 圆角矩形 */
+}
+
+.el-button {
+    font-size: 16px;
+    margin-right: 10px;
+}
+
+.el-button:first-child {
+  margin-left: 0;
+    
 }
 </style>
 

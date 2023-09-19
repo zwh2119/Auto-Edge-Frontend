@@ -550,8 +550,9 @@ margin-top: 20px;
   /* height: 100%; */
 }
 .selected{
-  background-color: rgb(96, 158, 254);
-  color:white;
+  /* background-color: rgb(96, 158, 254);
+  color:white; */
+  background-color: #deebf7;;
 }
 .custom-select {
   position: relative;
