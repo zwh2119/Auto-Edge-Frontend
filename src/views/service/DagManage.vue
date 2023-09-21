@@ -168,7 +168,7 @@ export default {
             fetch('/serv/get-dag-workflows-api') 
             .then(response => response.json())
             .then(data => {
-                console.log(data);
+                // console.log(data);
                 // 成功获取数据后，更新dagList字段
                 this.dagList = data;
             })

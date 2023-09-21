@@ -55,44 +55,33 @@
           
         </el-card>
 
-        <!-- 选择视频流处理步骤 -->
-        <!-- <el-card shadow="hover" style="margin: 20px; height: 250px;">
-          <div slot="header" style="font-size: 20px;font-weight: bold; margin-bottom: 20px;">选择视频流处理步骤</div>
-          <div>
-            <div class="custom-select">
-              <select v-model="selectedFlow">
-                <option value="" disabled selected>选择处理流水线</option>
-                <option 
-                  v-for="(flow,name) in flows"
-                  :key="name"
-                  :value="flow"
-                >
-                  {{ name }}
-                </option>
-              </select>
-              <span class="custom-arrow">&#9662;</span>
-            </div>
-            
-          </div> -->
+        
+        <el-card shadow="hover" style="margin: 20px;">
+          <div slot="header" style="font-size: 20px;font-weight: bold;">当前配置情况</div>
+          <!-- {{ ipVideoFlowInfo }} -->
+          <el-table :data="ipVideoFlowInfo" style="width: 100%">
+              <el-table-column label="IP地址" width="300">
+              <template #default="scope">
+                  <div style="display: flex; align-items: center">
+                  <!-- <el-icon><timer /></el-icon> -->
+                  <span style="margin-left: 10px">{{ scope.row.selectedIp }}</span>
+                  </div>
+              </template>
+              </el-table-column>
+              <el-table-column label="摄像头ID" width="200">
+              <template #default="scope">
+                  <div>{{ scope.row.selectedVideoId }}</div>
+              </template>
+              </el-table-column>
+              <el-table-column label="当前配置套餐" width="500">
+              <template #default="scope">
+                  <div>{{ scope.row.selectedFlow['dag_name'] }}</div>
+              </template>
+              </el-table-column>
+              
+          </el-table>
 
-
-          <!-- <div>
-            <div v-for="(serv, id) in servicesList" :key="id" style="display: inline-block; margin-right: 20px;">
-              <el-button :type="buttonTypes[id]" :plain="isPlain[id]" @click="changeButtonType(id,serv)">{{ serv }}</el-button>
-            </div>
-          </div> -->
-          <!-- 已选择流水线 -->
-          <!-- <div slot="header" style="font-size: 18px;margin-top: 30px; margin-bottom: 20px;">已选择流水线</div>
-          <div>
-            <div v-for="(serv,id) in selectedServices" style="display: inline-block;">
-              <el-button type="primary" text bg>{{ serv }}</el-button> -->
-              <!-- 显示箭头 -->
-              <!-- <span v-if="id < selectedServices.length - 1" class="arrow">➡</span>
-          </div> -->
-
-          <!-- </div> -->
-
-        <!-- </el-card> -->
+        </el-card>
         
 
         <!-- 设置任务约束 -->
@@ -101,13 +90,13 @@
           <el-row>
             <el-col :span="12">
             
-              <div  style="flex: 1;margin-top: 20px;">
-                <!-- 处理流水线 -->
-                <div>
-                  <span class="param" style="margin-right: 20px;">选择处理流水线</span>
-                  
-                  <div class="custom-select">
-                    <select v-model="selectedFlow">
+
+              <table style="margin-top: 30px;">
+                <tr>
+                  <td><span class="param">选择处理流水线</span></td>
+                  <td>
+                    <div class="custom-select" style="margin-left: 50px;">
+                    <!-- <select v-model="selectedFlow">
                       <option value="" disabled selected>选择处理流水线</option>
                       <option 
                         v-for="item in flows"
@@ -116,15 +105,29 @@
                       >
                         {{ item['dag_name'] }}
                       </option>
+                    </select> -->
+                    <select v-model="selectedFlow">
+                      <option value="" disabled selected>选择处理流水线</option>
+                      <option 
+                        v-for="item in flows"
+                        :key="item['dag_name']"
+                        :value="{ 'dag': item['dag'], 'dag_name': item['dag_name'] }"
+                      >
+                        {{ item['dag_name'] }}
+                      </option>
                     </select>
+
+                    
                     <span class="custom-arrow">&#9662;</span>
                   </div>
-                </div>
+                  </td>
+                </tr>
 
-                <!-- 优化模式 -->
-                <div style="margin-top: 10px;">
-                  <span class="param" style="margin-right: 20px;">优化模式</span>
-                  <div class="custom-select" style="margin-left: 50px;">
+                <tr style="margin-top: 30px;">
+                  <td><span class="param">选择优化模式</span></td>
+
+                  <td>
+                    <div class="custom-select" style="margin-left: 50px;">
                     <select v-model="selectedMode">
                       <option value="" disabled selected>选择优化模式</option>
                       <option 
@@ -137,13 +140,14 @@
                     </select>
                     <span class="custom-arrow">&#9662;</span>
                   </div>
-
-                </div>
-              </div>
+                  </td>
+                </tr>
+              </table>
+              
             
             </el-col>
             <el-col :span="12">
-              <div style="flex: 1;margin-top: 20px;">
+              <div style="flex: 1;margin-top: 30px;">
                 <div>
                   <span class="param" style="margin-right: 20px;">时延约束(s)</span>
                   <el-input v-model="delay_constraint" placeholder="输入时延约束" style="width: 100%; max-width: 200px;margin-left: 63px;" />
@@ -219,9 +223,11 @@ data() {
         // flow list(套餐)
         flows:[],
         // 选择的flow
-        selectedFlow:null,
+        selectedFlow:"",
         get_dag_url:null,
-        
+
+        // 每个摄像头的套餐配置情况
+        ipVideoFlowInfo:[],
         };
     },
     methods: {
@@ -290,7 +296,7 @@ data() {
           .then(data => {
             // console.log(data);
             this.flows = data;
-            console.log(this.flows)
+            // console.log(this.flows)
           })
           .catch(error =>{
             errHandler(err);
@@ -328,14 +334,14 @@ data() {
           node_addr: this.selectedIp,
           video_id: parseInt(this.selectedVideoId),
           // pipeline: this.selectedServices,
-          pipeline: this.selectedFlow,
+          pipeline: this.selectedFlow['dag'],
           user_constraint: {
               delay: parseFloat(this.delay_constraint),
               accuracy: parseFloat(this.acc_constraint),
             },
           };
           // console.log(this.inputText);
-          console.log(this.selectedFlow);
+          console.log(this.selectedFlow['dag']);
 
           // let text = this.inputText.replace(/[\r\n\s]/g, ""); // remove all newlines and spaces
           let text = JSON.stringify(this.inputText);
@@ -395,6 +401,18 @@ data() {
                 "job_info_dict",
                 JSON.stringify(this.job_info_dict)
               )
+              // 设置套餐信息
+              const serviceInfo = {
+                selectedIp:this.selectedIp, // IP
+                selectedVideoId: this.selectedVideoId, // 摄像头ID
+                selectedFlow:this.selectedFlow, // 已配置套餐
+              }
+
+              this.ipVideoFlowInfo.push(serviceInfo);
+              sessionStorage.setItem(
+                "ipVideoFlowInfo",
+                JSON.stringify(this.ipVideoFlowInfo)
+              )
 
               console.log(this.job_info_dict);
 
@@ -441,6 +459,11 @@ data() {
         // 如果 sessionStorage 中存在保存的任务信息，则将其解析为对象并赋值给 this.job_info_dict
         this.job_info_dict = JSON.parse(storedJobInfo);
       }
+
+      const storedService = sessionStorage.getItem("ipVideoFlowInfo");
+      if(storedService){
+        this.ipVideoFlowInfo = storedService;
+      }
       
       this.getInfo();
       this.getDags();
@@ -474,7 +497,15 @@ data() {
                         "type": "people indoor"
                     }
                 },
-            }
+            };
+
+      // this.ipVideoFlowInfo = [
+      //       {
+      //         selectedIp:"192.168.11.1",
+      //         selectedVideoId:1,
+      //         selectedFlow:{ 'dag': ["face_detection","face_alignment"], 'dag_name': "face_estimation" },
+      //       }
+      // ];
     },
 };
 </script>
@@ -579,5 +610,93 @@ select {
   right: 10px;
   transform: translateY(-50%);
   font-size: 16px; /* 自定义箭头图标大小 */
+}
+</style>
+
+<style scoped>
+body {
+  font-family: Arial, sans-serif;
+  background-color: #f9f9f9;
+  margin: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+}
+
+form {
+  max-width: 600px;
+  padding: 20px;
+  background-color: #fff;
+  border-radius: 8px;
+  /* box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1); */
+}
+
+h3 {
+  font-size: 24px;
+  color: #333;
+  margin-bottom: 20px;
+}
+
+input[type="text"],
+input[type="file"] {
+  width: calc(100% - 20px);
+  padding: 10px;
+  margin-bottom: 10px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 16px;
+}
+
+input[type="file"] {
+  cursor: pointer;
+}
+
+.el-button {
+  font-size: 16px;
+  margin-right: 10px;
+}
+
+.el-button:first-child {
+  margin-left: 0;
+  
+  
+}
+
+.outline{
+    /* max-width: 600px; */
+    padding: 20px;
+    background-color: #fff;
+    border-radius: 8px;
+    /* box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1); */
+  }
+
+.new-dag-font-style{
+    font-size: 16px;
+    margin-bottom: 20px;
+    font-weight: bold;
+}
+
+.svc-container {
+    display: flex;
+    flex-wrap: wrap;
+    padding: 5px; /* 可根据需要调整 */
+    list-style-type: none;
+}
+
+.svc-item {
+    margin: 2px; /* 可根据需要调整 */
+    padding: 2px; /* 可根据需要调整 */
+    border-radius: 10px; /* 圆角矩形 */
+}
+
+.el-button {
+    font-size: 16px;
+    margin-right: 10px;
+}
+
+.el-button:first-child {
+  margin-left: 0;
+    
 }
 </style>

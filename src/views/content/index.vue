@@ -1,31 +1,11 @@
 <template>
     <div class="content">
         <!-- 视频任务配置new  -->
-        <el-card shadow="hover" style="margin-left: 20px;margin-right: 20px;">
+        <!-- <el-card shadow="hover" style="margin-left: 20px;margin-right: 20px;">
             <div slot="header" style="font-size: 20px; font-weight: bold; margin-bottom: 20px;">视频任务配置</div>
-            <!-- TODO: 分页显示 -->
-            <!-- <div>{{ job_info_dict}}</div> -->
-            <!-- <div v-for="(values, job_id, index) in job_info_dict" class="available-node"
-            v-on:click="selectItem(job_id)"
-            v-bind:class="{ 'selected': selected === job_id }"
-            >
-                <div class="centered-div">
-                    <ul style="list-style-type: none;">
-                        <li style="font-size: 16px; font-weight: bold;">{{values.selectedIp}}</li>
-                        <li>摄像头ID: {{ values.selectedVideoId }}</li>
-                        <li>描述: {{ values.type }}</li>
-                        <li>优化模式: {{ values.mode }}</li>
-                        <li>
-                            {{ values.mode === 'latency' ? '时延约束' : '精度约束' }}: {{ values.mode === 'latency' ? values.delay_constraint : values.acc_constraint }}
-                        </li>
-                    </ul>
-                </div>
-            </div> -->
 
-
-            <!-- 显示当前页的内容 -->
             <div style="display: flex; flex-direction: column; align-items: center;">
-              <!-- 上面的 div 包含 v-for 循环的内容 -->
+              
               <div>
                 <div v-for="(values, job_id, index) in currentPageItems" class="available-node-result"
                   v-on:click="selectItem(job_id)"
@@ -45,30 +25,50 @@
                 </div>
               </div>
 
-              <!-- 下面的 div 包含分页控件 -->
               <div class="pagination">
                 <el-button @click="prevPage" :disabled="currentPage === 1">上一页</el-button>
                 <el-button @click="nextPage" :disabled="currentPage === pageCount">下一页</el-button>
               </div>
             </div>
 
-        </el-card>
+        </el-card> -->
 
 
         <!-- 运行时情境 -->
         <div class="card-container">
             <!-- 应用情境 -->
             <el-card shadow="hover" class="card" style="flex: 1;height:500px;">
-                <div slot="header" style="font-size: 20px;font-weight: bold; margin-bottom: 20px;">应用情境</div>
-                <!-- <div style="margin-bottom: 10px; font-size: 18px; font-weight: 400;">应用情境</div> -->
-                    <!-- <div
-                        class="info-h1-flex-text"
-                        v-for="(value, key) in modifiedRuntime"
-                    >
-                        <div>{{ key }}</div>
-                        <div>{{ value }}</div>
-                    </div> -->
-                    <div class="canvas-container">
+                <!-- <div slot="header" style="font-size: 20px;font-weight: bold; margin-bottom: 20px;"> -->
+                <div slot="header"  style="font-size: 20px;font-weight: bold; margin-bottom: 20px;display: flex; align-items: center;">
+                  <span style="margin-right: 50px;">应用情境</span>
+                  <div class="custom-select">
+                        <select v-model="selectedJob" @change="selectItem(selectedJob['job_id'])">
+                        <option value="" disabled selected>请选择查询数据流</option>
+                        <option
+                            v-for="(values, job_id, index) in job_info_dict"
+                            :key="job_id"
+                            :value="{'job_id':values['job_id'],'selectedIp':values['selectedIp'],'selectedVideoId':values['selectedVideoId'],
+                                      'type':values['type'],'mode':values['mode'],'delay_constraint':values['delay_constraint'],'acc_constraint':values['acc_constraint']
+                          }"
+                        
+                        >{{ values['selectedIp'] + " - " + values['selectedVideoId'] }}</option>
+                        </select>
+                        <span class="custom-arrow">&#9662;</span>
+                        
+                  </div>
+                  
+                  
+                </div>
+                <div style="display:flex;font-size:13px;font-weight:500;margin-left:20px;width:100%;color:gray;">
+                      <div style="flex:1;margin-left:10px;">描述: {{ selectedJob.type }}</div>
+                      <div style="flex:1;margin-left:10px;">优化模式: <div v-show="selectedJob" style="display:inline-block">{{ selectedJob.mode == 'latency'? '时延优先':'精度优先' }}</div></div>
+                      <div style="flex:1;margin-left:10px;">
+                        {{ selectedJob.mode === 'latency' ? '时延约束' : '精度约束' }}: {{ selectedJob.mode === 'latency' ? selectedJob.delay_constraint+'s' : selectedJob.acc_constraint }}
+                      </div>
+                  </div>
+                
+              
+                    <div class="canvas-container" style="margin-top:20px">
                         <div class="inner-div">
                             <span>时延(s)</span>
                             <canvas ref="delayCanvas" width="150" height="150"></canvas>
@@ -121,7 +121,7 @@
                 
                     <div>
                         <!-- 第一行 CPU利用率+内存利用率 -->
-                        <div class="canvas-container">
+                        <div class="canvas-container" style="margin-top:52px">
                             <div class="inner-div">
                                 <span>CPU利用率</span>
                                 <canvas ref="cpuCanvas" width="150" height="150"></canvas>
@@ -253,13 +253,14 @@ export default{
             videoUrl: "video/user/video/",
 
             cluster_info:null,
-            selectedIp:null,
+            selectedIp:"",
             // 资源
             resource_display:[],
             // 可查询任务
             submit_jobs:[],
             // 选取的查询任务
             submit_job:null,
+            selectedJob:"",
             // 查询结果
             result:null,
             appended_result:null,
@@ -851,7 +852,8 @@ export default{
 }
 .card-container {
   display: flex;
-  margin: 20px;
+  margin-left: 20px;
+  margin-right: 20px;
 }
 .image-container{
     width: 100%;

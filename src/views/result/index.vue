@@ -102,23 +102,24 @@
             </el-col>
           </el-row> -->
 
-          <div>
-            <el-checkbox @change="showPic()">原始视频流</el-checkbox>
-            <el-checkbox v-for="(item, idx) in keyList" :key="idx" :label="item" @change="toggleChart(item)">{{ item }}</el-checkbox>
+
+          <div ref="checkboxContainer">
+            <el-checkbox @change="showPic()" :disabled="!selected" v-model="checkedPic">原始视频流</el-checkbox>
+            <!-- <el-checkbox v-for="(item, idx) in keyList" :key="idx" :label="item" @change="toggleChart(item)" :disabled="!selected">{{ item }}</el-checkbox> -->
+            <el-checkbox v-for="(item, idx) in modifiedKeyList" :key="idx" :label="item" @change="toggleChart(mapBack(item))" :disabled="!selected" v-model="checkboxes[idx]">{{ item }}</el-checkbox>
+  
           </div>
 
           <!-- 画布容器 -->
           <div>
-            <div v-show="showOriginal" style="width: 400px; height: 250px; margin-top: 20px;float: left;">
+            <div v-show="showOriginal" style="width: 400px; height: 250px; margin-top: 20px; float: left;">
               <img :src="videoUrl + selected" style="width: 100%; height: 90%;" />
             </div>
             
             <div v-for="(item, idx) in keyList" :key="idx" style="float: left;">
               <div v-show="showChart(item)" :id="item" style="width: 400px; height: 250px; margin-top: 20px;"></div>
             </div>
-            
           </div>
-
 
         </el-card>
 
@@ -181,6 +182,16 @@ export default{
             selectedCharts:[],
             showOverview:false,
 
+            checkedPic:false,
+            checkboxes:[],
+
+            // 一段时间折线图
+            maxCount:20,
+            delay_list:{},
+            objn_list:{},
+            objsize_list:{},
+            objstable_list:{},
+
             
         };
     },
@@ -211,6 +222,49 @@ export default{
         //   };
         //   chart.setOption(option);
         // },
+        mapTOChinese(value){
+          if(value === "up"){
+            return "抬头人数";
+          }else if(value === "total"){
+            return "总人数";
+          }else if(value === "car"){
+            return "汽车";
+          }else if(value === "truck"){
+            return "卡车";
+          }else if(value === "train"){
+            return "火车";
+          }else if(value === "bus"){
+            return "公交车";
+          }else if(value === "motorcycle"){
+            return "摩托车"
+          }else if(value === "person"){
+            return "行人";
+          }else{
+            return value;
+          }
+        },
+        mapBack(value){
+          if(value === "抬头人数"){
+            return "up";
+          }else if(value === "总人数"){
+            return "total";
+          }else if(value === "汽车"){
+            return "car";
+          }else if(value === "卡车"){
+            return "truck";
+          }else if(value === "火车"){
+            return "train";
+          }else if(value === "公交车"){
+            return "bus";
+          }else if(value === "摩托车"){
+            return "motorcycle";
+          }else if(value === "行人"){
+            return "person";
+          }
+          else{
+            return value;
+          }
+        },
         showPic(){
           if(!this.showOriginal){
             this.showOriginal = true;
@@ -275,7 +329,7 @@ export default{
             ],
             title:{
               show:true,
-              text: itemKey,
+              text: this.mapTOChinese(itemKey),
             }
             // legend:{
             //   data:[key],
@@ -318,7 +372,7 @@ export default{
               // resKeyList = resKeyList.concat(keyList);
             }
             // resKeyList = [new Set(resKeyList)]
-            console.log("resKeyList: " + resKeyList);
+            // console.log("resKeyList: " + resKeyList);
             // var resKeyList = Object.keys(appended_data[0])
             for (var i = 0; i < resKeyList.length; i++) {
               var key = resKeyList[i];
@@ -452,12 +506,16 @@ export default{
         //   console.log(job_id);
           this.selected = job_id;
           this.submit_job = job_id;
+          this.selectedCharts = [];
+          this.showOriginal = false;
+          this.checkedPic = false;
+          this.clearCheckboxes();
           this.updateResultUrl();
         },
         updateKeyList(){
           // 获取appended_result中的key值
           const data = this.appended_result;
-          console.log(data);
+          // console.log(data);
           const resKeyList = [];
           for(var i = 0;i < data.length;i ++){
             var keylist =  Object.keys(data[i]['count_result']);
@@ -468,6 +526,12 @@ export default{
             }
           }
           this.keyList = resKeyList;
+        },
+        // 清除复选框勾选状态
+        
+        clearCheckboxes() {
+          // 清除所有复选框的勾选状态
+          this.checkboxes = this.checkboxes.map(() => false);
         },
         // 查询结果
         updateResultUrl() {
@@ -488,25 +552,72 @@ export default{
               this.appended_result = this.result["appended_result"];
               this.runtime = this.result["latest_result"]["runtime"];
               this.plan = this.result["latest_result"]["plan"];         
-              console.log(this.runtime);
+              // console.log(this.runtime);
 
               // 应用情境
+              const job_id = this.submit_job;
               if (this.runtime && this.runtime["delay"]) {
                 this.delay = this.runtime["delay"].toFixed(2);
+                
+                if(!this.delay_list[this.submit_job]){
+                  this.delay_list[job_id] = [];
+                }
+
+                this.delay_list[job_id].push(this.delay);
+
+                // 超过个数就移除
+                if(this.delay_list[job_id].length > this.maxCount){
+                  this.delay_list[job_id].shift();
+                }
               }
 
               if (this.runtime && this.runtime["obj_n"]) {
                 this.obj_n = Math.floor(this.runtime["obj_n"]);
+
+                if(!this.objn_list[this.submit_job]){
+                  this.objn_list[job_id] = [];
+                }
+
+                this.objn_list[job_id].push(this.obj_n);
+
+                // 超过个数就移除
+                if(this.objn_list[job_id].length > this.maxCount){
+                  this.objn_list[job_id].shift();
+                }
               } 
 
               if (this.runtime && this.runtime["obj_size"]) {
                 this.obj_size = this.runtime["obj_size"].toFixed(2);
+
+                if(!this.objsize_list[this.submit_job]){
+                  this.objsize_list[job_id] = [];
+                }
+
+                this.objsize_list[job_id].push(this.obj_size);
+
+                // 超过个数就移除
+                if(this.objsize_list[job_id].length > this.maxCount){
+                  this.objsize_list[job_id].shift();
+                }
               }
 
               if (this.runtime && this.runtime["obj_stable"]) {
                 this.obj_stable = this.runtime["obj_stable"];
+
+                if(!this.objstable_list[this.submit_job]){
+                  this.objstable_list[job_id] = [];
+                }
+
+                this.objstable_list[job_id].push(this.obj_stable);
+
+                // 超过个数就移除
+                if(this.objstable_list[job_id].length > this.maxCount){
+                  this.objstable_list[job_id].shift();
+                }
               }
               // console.log("test");
+
+              console.log(this.delay_list);
 
               // 出问题:
               // TypeError: Cannot convert undefined or null to object
@@ -557,6 +668,35 @@ export default{
             obj[key] = this.job_info_dict[key];
             return obj;
           }, {});
+        },
+        modifiedKeyList(){
+          // console.log(this.keyList);
+          if(!this.keyList){
+            return null;
+          }
+          return Object.fromEntries(
+            Object.entries(this.keyList).map(([key,value]) =>{
+              if(value === "up"){
+                return [key,"抬头人数"];
+              }else if(value === "total"){
+                return [key,"总人数"];
+              } else if(value === "car"){
+                return [key,"汽车"];
+              } else if(value === "truck"){
+                return [key,"卡车"];
+              } else if(value === "train"){
+                return [key,"火车"];
+              } else if(value === "bus"){
+                return [key,"公交车"];
+              } else if(value === "motorcycle"){
+                return [key,"摩托车"];
+              } else if(value === "person"){
+                return [key,"行人"];
+              } else{
+                return [key,value];
+              }
+            })
+          );
         },
         modifiedRuntime() {
             if (!this.runtime) {
@@ -632,6 +772,7 @@ export default{
             this.job_info_dict = JSON.parse(job_info);
             // console.log(this.job_info_dict);
         }
+        // REMOVE: 静态填充
         this.resource_display = ["cpu_ratio","mem_ratio","gpu_ratio","net_ratio(MBps)"];
         
         this.appended_result = [
@@ -836,7 +977,6 @@ export default{
     ];
       this.updateKeyList();
 
-        // this.drawTest();
         // this.initChart();
         // this.timer = setInterval(() => {
         //   this.updateResultUrl();
