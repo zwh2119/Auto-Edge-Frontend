@@ -6,7 +6,7 @@ export default {
 		submit:'数据流服务',
 		result:'视频流分析结果',
 		content:'运行时情境与调度配置',
-
+		detail:'运行时近期状况',
 	},
 	staticRoutes: {
 		signIn: '登录',

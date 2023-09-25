@@ -38,11 +38,11 @@
         <div class="card-container">
             <!-- 应用情境 -->
             <el-card shadow="hover" class="card" style="flex: 1;height:500px;">
-                <!-- <div slot="header" style="font-size: 20px;font-weight: bold; margin-bottom: 20px;"> -->
                 <div slot="header"  style="font-size: 20px;font-weight: bold; margin-bottom: 20px;display: flex; align-items: center;">
                   <span style="margin-right: 50px;">应用情境</span>
                   <div class="custom-select">
                         <select v-model="selectedJob" @change="selectItem(selectedJob['job_id'])">
+                         
                         <option value="" disabled selected>请选择查询数据流</option>
                         <option
                             v-for="(values, job_id, index) in job_info_dict"
@@ -65,30 +65,33 @@
                       <div style="flex:1;margin-left:10px;">
                         {{ selectedJob.mode === 'latency' ? '时延约束' : '精度约束' }}: {{ selectedJob.mode === 'latency' ? selectedJob.delay_constraint+'s' : selectedJob.acc_constraint }}
                       </div>
-                  </div>
-                
-              
-                    <div class="canvas-container" style="margin-top:20px">
-                        <div class="inner-div">
-                            <span>时延(s)</span>
-                            <canvas ref="delayCanvas" width="150" height="150"></canvas>
-                        </div>
-                        <div class="inner-div">
-                            <span>目标数量(个)</span>
-                            <canvas ref="objNumCanvas" width="150" height="150"></canvas>
-                        </div>
-                    </div>
-
-                    <div class="canvas-container">
-                        <div class="inner-div">
-                            <span>目标大小</span>
-                            <canvas ref="objSizeCanvas" width="150" height="150"></canvas>
-                        </div>
-                        <div class="inner-div">
-                            <span>场景稳定性</span>
-                            <canvas ref="objStableCanvas" width="150" height="150"></canvas>
-                        </div>
+                      
                 </div>
+                
+                    <a style="text-decoration:none;color:black;" :href="selected ? '/#/detail' : null">
+                      
+                      <div class="canvas-container" style="margin-top:20px">
+                          <div class="inner-div">
+                              <span>时延(s)</span>
+                              <canvas ref="delayCanvas" width="150" height="150"></canvas>
+                          </div>
+                          <div class="inner-div">
+                              <span>目标数量(个)</span>
+                              <canvas ref="objNumCanvas" width="150" height="150"></canvas>
+                          </div>
+                      </div>
+
+                      <div class="canvas-container">
+                          <div class="inner-div">
+                              <span>目标大小</span>
+                              <canvas ref="objSizeCanvas" width="150" height="150"></canvas>
+                          </div>
+                          <div class="inner-div">
+                              <span>场景稳定性</span>
+                              <canvas ref="objStableCanvas" width="150" height="150"></canvas>
+                          </div>
+                      </div>
+                    </a>
 
                 <div>
                 </div>
@@ -120,6 +123,7 @@
                 </div>
                 
                     <div>
+                      <!-- {{ cluster_info }} -->
                         <!-- 第一行 CPU利用率+内存利用率 -->
                         <div class="canvas-container" style="margin-top:52px">
                             <div class="inner-div">
@@ -160,12 +164,13 @@
             <div class="info-h1">{{ h1_key }}</div>
             <div>
               <div class="info-h1-flex-text" v-for="(h2_v, h2_k) in h1_value">
-                <div class="info-h2">{{ h2_k }}</div>
+                <div 
+                v-bind:class="{'info-h2-1': h1_key === '云边协同配置', 'info-h2-2': h1_key !== '云边协同配置'}">{{ mapTOChinese(h2_k) }}</div>
 
                 <!-- 以按钮方式显示特定配置 -->
                 <!-- 云边协同配置 -->
                 <!-- 1、flow_mapping: 本机、边缘、云端 -->
-                <div v-if="h1_key === '云边协同配置'" class="info-h2-flex-text">
+                <!-- <div v-if="h1_key === '云边协同配置'" class="info-h2-flex-text">
                   <el-radio-group
                     direction="row"
                     v-model="h1_value[h2_k]['node_role']"
@@ -178,6 +183,38 @@
                       >{{ item.ui_value }}</el-radio-button
                     >
                   </el-radio-group>
+                </div> -->
+                <div v-if="h1_key === '云边协同配置'" class="info-h2-flex-text">
+                  <!-- <el-radio-group
+                    direction="row"
+                    v-model="h1_value[h2_k]['node_role']"
+                    :disabled="true"
+                    > -->
+                  <!-- {{ h1_value[h2_k]['node_ip'] === selectedJob['selectedIp'] ? 'host' : 'cloud' }} -->
+                  <!-- {{ getSelectedNode(h1_value,h2_k) }} -->
+                  <!-- <el-radio-group
+                    direction="row"
+                    :v-model="getSelectedNode(h1_value,h2_k)"
+                    :disabled="true"
+                  > -->
+                  <!-- <el-radio-group
+                    direction="row"
+                    :disabled="true"
+                  >
+                    <el-radio-button
+                      class="user-radio"
+                      v-for="item in node_type_list"
+                      :label="item.key"
+                      :key="item.key"
+                      :checked="item.key === getSelectedNode(h1_value,h2_k)"
+                      >{{ item.ui_value }}</el-radio-button>
+                  </el-radio-group> -->
+                  <div v-for="item in node_type_list" 
+                  v-bind:class="{'button-not-selected': item.key != getSelectedNode(h1_value,h2_k), 'button-selected': item.key === getSelectedNode(h1_value,h2_k)}"
+                  >
+                    <span class="centered-text">{{ item.ui_value }}</span>
+                  </div>
+
                 </div>
                 <!-- 视频配置 -->
                 <!-- 2、video_conf: 编解码 -->
@@ -290,11 +327,38 @@ export default{
             itemsPerPage: 3, // 每页显示的数量
             currentPage: 1, // 当前页数
 
+            proNode:"",
+
             
         };
     },
     methods: {
-        
+      mapTOChinese(item){
+        if(item === 'encoder'){
+          return "编 码";
+        }else if(item === 'fps'){
+          return "帧 率";
+        }else if(item === 'resolution'){
+          return "分辨率";
+        }else{
+          return item;
+        }
+      },
+        getSelectedNode(h1_value,h2_k){
+            const proIP = h1_value[h2_k]['node_ip'];
+            console.log("处理IP:" + proIP);
+            const submitIP = this.selectedJob['selectedIp'].split(':')[0];
+            console.log("提交IP:" + submitIP);
+            if(proIP === submitIP){
+              console.log("host");
+              return "host";
+            }else if(proIP === "114.212.81.11"){
+              console.log("cloud");
+              return "cloud";
+            }
+            console.log("edge");
+            return "edge";
+        },
         
         // 绘制圆环
         drawCircle(canvas,content_filled,percentage,color) {
@@ -363,6 +427,7 @@ export default{
             this.drawCircle(this.$refs.cpuCanvas,info['n_cpu']+'核',info['cpu_ratio']*0.01,'#5b9bd5');
 
             // 内存使用率
+            // console.log(info['mem_total']);
             const mem_total = info['mem_total'].toFixed(1);
             this.drawCircle(this.$refs.memCanvas,mem_total+'GB',info['mem_ratio']*0.01,'#c5e0b4');
 
@@ -377,15 +442,17 @@ export default{
         },
         // 点击选择查询任务
         selectItem(job_id){
-        //   console.log(job_id);
+          // console.log(job_id);
+          // console.log(this.selectJob);
           this.selected = job_id;
+          sessionStorage.setItem("job_id", JSON.stringify(this.selected));
           this.submit_job = job_id;
           this.updateResultUrl();
         },
 
         // 查询结果
         updateResultUrl() {
-          console.log(this.submit_job);
+          // console.log(this.submit_job);
           const url = this.resultUrl + this.submit_job;
           // console.log(url);
           const loading = ElLoading.service({
@@ -402,7 +469,7 @@ export default{
               this.appended_result = this.result["appended_result"];
               this.runtime = this.result["latest_result"]["runtime"];
               this.plan = this.result["latest_result"]["plan"];         
-              console.log(this.runtime);
+              // console.log(this.runtime);
               // 应用情境
               if (this.runtime && this.runtime["delay"]) {
                 this.delay = this.runtime["delay"].toFixed(2);
@@ -615,206 +682,206 @@ export default{
     // }
     //     };
 
-        this.appended_result = [
-        {
-            "count_result": {
-                "total": 19,
-                "up": 16
-            },
-            "delay": 0.22060694013323104,
-            "execute_flag": true,
-            "frame_id": 774,
-            "n_loop": 63,
-            "proc_resource_info_list": [
-                {
-                    "cpu_util_limit": 1,
-                    "cpu_util_use": 0.27425,
-                    "latency": 1.1754405498504639,
-                    "pid": 11065
-                }
-            ]
-        },
-        {
-            "count_result": {
-                "total": 18,
-                "up": 15
-            },
-            "delay": 0.20396453993661062,
-            "execute_flag": true,
-            "frame_id": 780,
-            "n_loop": 64,
-            "proc_resource_info_list": [
-                {
-                    "cpu_util_limit": 1,
-                    "cpu_util_use": 0.27399999999999997,
-                    "latency": 1.0766024589538574,
-                    "pid": 11065
-                }
-            ]
-        },
-        {
-            "count_result": {
-                "total": 16,
-                "up": 12
-            },
-            "delay": 0.18409783499581472,
-            "execute_flag": true,
-            "frame_id": 786,
-            "n_loop": 65,
-            "proc_resource_info_list": [
-                {
-                    "cpu_util_limit": 1,
-                    "cpu_util_use": 0.27949999999999997,
-                    "latency": 0.9475843906402588,
-                    "pid": 11065
-                }
-            ]
-        },
-        {
-            "count_result": {
-                "total": 19,
-                "up": 16
-            },
-            "delay": 0.21081665584019255,
-            "execute_flag": true,
-            "frame_id": 792,
-            "n_loop": 66,
-            "proc_resource_info_list": [
-                {
-                    "cpu_util_limit": 1,
-                    "cpu_util_use": 0.27725,
-                    "latency": 1.1265530586242676,
-                    "pid": 11065
-                }
-            ]
-        },
-        {
-            "count_result": {
-                "total": 17,
-                "up": 16
-            },
-            "delay": 0.21186903544834684,
-            "execute_flag": true,
-            "frame_id": 798,
-            "n_loop": 67,
-            "proc_resource_info_list": [
-                {
-                    "cpu_util_limit": 1,
-                    "cpu_util_use": 0.26975,
-                    "latency": 1.1213617324829102,
-                    "pid": 11065
-                }
-            ]
-        },
-        {
-            "count_result": {
-                "total": 19,
-                "up": 14
-            },
-            "delay": 0.21648645401000977,
-            "execute_flag": true,
-            "frame_id": 804,
-            "n_loop": 68,
-            "proc_resource_info_list": [
-                {
-                    "cpu_util_limit": 1,
-                    "cpu_util_use": 0.273,
-                    "latency": 1.1257836818695068,
-                    "pid": 11065
-                }
-            ]
-        },
-        {
-            "count_result": {
-                "total": 18,
-                "up": 16
-            },
-            "delay": 0.21124557086399626,
-            "execute_flag": true,
-            "frame_id": 810,
-            "n_loop": 69,
-            "proc_resource_info_list": [
-                {
-                    "cpu_util_limit": 1,
-                    "cpu_util_use": 0.276,
-                    "latency": 1.0686159133911133,
-                    "pid": 11065
-                }
-            ]
-        },
-        {
-            "count_result": {
-                "total": 20,
-                "up": 15
-            },
-            "delay": 0.21829724311828613,
-            "execute_flag": true,
-            "frame_id": 816,
-            "n_loop": 70,
-            "proc_resource_info_list": [
-                {
-                    "cpu_util_limit": 1,
-                    "cpu_util_use": 0.271,
-                    "latency": 1.180079460144043,
-                    "pid": 11065
-                }
-            ]
-        },
-        {
-            "count_result": {
-                "total": 20,
-                "up": 15
-            },
-            "delay": 0.21993769918169295,
-            "execute_flag": true,
-            "frame_id": 822,
-            "n_loop": 71,
-            "proc_resource_info_list": [
-                {
-                    "cpu_util_limit": 1,
-                    "cpu_util_use": 0.27575,
-                    "latency": 1.1873185634613037,
-                    "pid": 11065
-                }
-            ]
-        },
-        {
-            "count_result": {
-                "total": 19,
-                "up": 15
-            },
-            "delay": 0.2089878831590925,
-            "execute_flag": true,
-            "frame_id": 828,
-            "n_loop": 72,
-            "proc_resource_info_list": [
-                {
-                    "cpu_util_limit": 1,
-                    "cpu_util_use": 0.27949999999999997,
-                    "latency": 1.1177542209625244,
-                    "pid": 11065
-                }
-            ]
-        },
-        {
-            "count_result": {
-                "total": 18,
-                "up": 14
-            },
-            "delay": 0.20454134259905135,
-            "execute_flag": true,
-            "frame_id": 834,
-            "n_loop": 73,
-            "proc_resource_info_list": [
-                {
-                    "cpu_util_limit": 1,
-                    "cpu_util_use": 0.27425,
-                    "latency": 1.0840375423431396,
-                    "pid": 11065
-                }
-            ]
-        }
-    ],
+    //     this.appended_result = [
+    //     {
+    //         "count_result": {
+    //             "total": 19,
+    //             "up": 16
+    //         },
+    //         "delay": 0.22060694013323104,
+    //         "execute_flag": true,
+    //         "frame_id": 774,
+    //         "n_loop": 63,
+    //         "proc_resource_info_list": [
+    //             {
+    //                 "cpu_util_limit": 1,
+    //                 "cpu_util_use": 0.27425,
+    //                 "latency": 1.1754405498504639,
+    //                 "pid": 11065
+    //             }
+    //         ]
+    //     },
+    //     {
+    //         "count_result": {
+    //             "total": 18,
+    //             "up": 15
+    //         },
+    //         "delay": 0.20396453993661062,
+    //         "execute_flag": true,
+    //         "frame_id": 780,
+    //         "n_loop": 64,
+    //         "proc_resource_info_list": [
+    //             {
+    //                 "cpu_util_limit": 1,
+    //                 "cpu_util_use": 0.27399999999999997,
+    //                 "latency": 1.0766024589538574,
+    //                 "pid": 11065
+    //             }
+    //         ]
+    //     },
+    //     {
+    //         "count_result": {
+    //             "total": 16,
+    //             "up": 12
+    //         },
+    //         "delay": 0.18409783499581472,
+    //         "execute_flag": true,
+    //         "frame_id": 786,
+    //         "n_loop": 65,
+    //         "proc_resource_info_list": [
+    //             {
+    //                 "cpu_util_limit": 1,
+    //                 "cpu_util_use": 0.27949999999999997,
+    //                 "latency": 0.9475843906402588,
+    //                 "pid": 11065
+    //             }
+    //         ]
+    //     },
+    //     {
+    //         "count_result": {
+    //             "total": 19,
+    //             "up": 16
+    //         },
+    //         "delay": 0.21081665584019255,
+    //         "execute_flag": true,
+    //         "frame_id": 792,
+    //         "n_loop": 66,
+    //         "proc_resource_info_list": [
+    //             {
+    //                 "cpu_util_limit": 1,
+    //                 "cpu_util_use": 0.27725,
+    //                 "latency": 1.1265530586242676,
+    //                 "pid": 11065
+    //             }
+    //         ]
+    //     },
+    //     {
+    //         "count_result": {
+    //             "total": 17,
+    //             "up": 16
+    //         },
+    //         "delay": 0.21186903544834684,
+    //         "execute_flag": true,
+    //         "frame_id": 798,
+    //         "n_loop": 67,
+    //         "proc_resource_info_list": [
+    //             {
+    //                 "cpu_util_limit": 1,
+    //                 "cpu_util_use": 0.26975,
+    //                 "latency": 1.1213617324829102,
+    //                 "pid": 11065
+    //             }
+    //         ]
+    //     },
+    //     {
+    //         "count_result": {
+    //             "total": 19,
+    //             "up": 14
+    //         },
+    //         "delay": 0.21648645401000977,
+    //         "execute_flag": true,
+    //         "frame_id": 804,
+    //         "n_loop": 68,
+    //         "proc_resource_info_list": [
+    //             {
+    //                 "cpu_util_limit": 1,
+    //                 "cpu_util_use": 0.273,
+    //                 "latency": 1.1257836818695068,
+    //                 "pid": 11065
+    //             }
+    //         ]
+    //     },
+    //     {
+    //         "count_result": {
+    //             "total": 18,
+    //             "up": 16
+    //         },
+    //         "delay": 0.21124557086399626,
+    //         "execute_flag": true,
+    //         "frame_id": 810,
+    //         "n_loop": 69,
+    //         "proc_resource_info_list": [
+    //             {
+    //                 "cpu_util_limit": 1,
+    //                 "cpu_util_use": 0.276,
+    //                 "latency": 1.0686159133911133,
+    //                 "pid": 11065
+    //             }
+    //         ]
+    //     },
+    //     {
+    //         "count_result": {
+    //             "total": 20,
+    //             "up": 15
+    //         },
+    //         "delay": 0.21829724311828613,
+    //         "execute_flag": true,
+    //         "frame_id": 816,
+    //         "n_loop": 70,
+    //         "proc_resource_info_list": [
+    //             {
+    //                 "cpu_util_limit": 1,
+    //                 "cpu_util_use": 0.271,
+    //                 "latency": 1.180079460144043,
+    //                 "pid": 11065
+    //             }
+    //         ]
+    //     },
+    //     {
+    //         "count_result": {
+    //             "total": 20,
+    //             "up": 15
+    //         },
+    //         "delay": 0.21993769918169295,
+    //         "execute_flag": true,
+    //         "frame_id": 822,
+    //         "n_loop": 71,
+    //         "proc_resource_info_list": [
+    //             {
+    //                 "cpu_util_limit": 1,
+    //                 "cpu_util_use": 0.27575,
+    //                 "latency": 1.1873185634613037,
+    //                 "pid": 11065
+    //             }
+    //         ]
+    //     },
+    //     {
+    //         "count_result": {
+    //             "total": 19,
+    //             "up": 15
+    //         },
+    //         "delay": 0.2089878831590925,
+    //         "execute_flag": true,
+    //         "frame_id": 828,
+    //         "n_loop": 72,
+    //         "proc_resource_info_list": [
+    //             {
+    //                 "cpu_util_limit": 1,
+    //                 "cpu_util_use": 0.27949999999999997,
+    //                 "latency": 1.1177542209625244,
+    //                 "pid": 11065
+    //             }
+    //         ]
+    //     },
+    //     {
+    //         "count_result": {
+    //             "total": 18,
+    //             "up": 14
+    //         },
+    //         "delay": 0.20454134259905135,
+    //         "execute_flag": true,
+    //         "frame_id": 834,
+    //         "n_loop": 73,
+    //         "proc_resource_info_list": [
+    //             {
+    //                 "cpu_util_limit": 1,
+    //                 "cpu_util_use": 0.27425,
+    //                 "latency": 1.0840375423431396,
+    //                 "pid": 11065
+    //             }
+    //         ]
+    //     }
+    // ],
         this.node_type_list = [
                 { key: "host", ui_value: "视频边端" },
                 { key: "edge", ui_value: "其他边端" },
@@ -823,7 +890,7 @@ export default{
         this.encoder_type_list = [
             { key: "H264", ui_value: "H264" },
             { key: "JPEG", ui_value: "JPEG" },
-            { key: "x", ui_value: "..." },
+            // { key: "x", ui_value: "..." },
             ];
         this.fps_type_list = [
             { key: 1, ui_value: "1" },
@@ -842,7 +909,7 @@ export default{
         // this.timer = setInterval(() => {
         //   this.updateResultUrl();
           this.updateResourceUrl();
-        // }, 8000);
+        // }, 6000);
     },
 }
 </script>
@@ -887,23 +954,40 @@ export default{
   width: min-content;
   white-space: nowrap;
   text-align: center;
-  /* color: #2f74ff; */
   font-weight: 750;
-  /* line-height: 20px; */
   font-size:18px;
-  border: 0px dashed rgb(77, 77, 77);
   margin-top:10px;
   margin-bottom:10px;
-  /* margin: 5px; */
-  /* padding: 5px; */
-  border-radius: 5px;
 }
 .info-h1-flex-text {
   display: flex;
   align-items: center;
 }
-.info-h2 {
+.info-h2-1 {
   width: min-content;
+  height: min-content;
+  white-space: nowrap;
+  text-align: center;
+  color: #6c9bd4;
+  height:30px;
+  /* width:120px; */
+  line-height:30px;
+  background-color: rgb(220, 220, 220);
+  /* line-height: 20px; */
+  /* border: 2px dashed rgb(77, 77, 77); */
+  /* margin: 5px; */
+  /* padding: 5px; */
+  font-weight: 500;
+  /* border-left: 5px solid rgb(77, 77, 77); */
+  border-radius: 5px;
+  margin: 5px;
+  padding-left: 10px;
+  padding-right: 10px;
+  margin-left: 40px;
+  margin-right: 5px;
+}
+.info-h2-2 {
+  width: 60px;
   height: min-content;
   white-space: nowrap;
   text-align: center;
@@ -1015,6 +1099,34 @@ select {
   font-size: 18px;
   margin-top: 10px;
   padding: 0px;
+}
+.button-not-selected{
+  width:75px;
+  height:40px;
+  border: 1px solid #ffffff;
+  margin-left:8px;
+  border-radius:5px;
+  background: #dcdcdc;
+  text-align:center;
+  color:white;
+}
+.button-selected{
+  width:75px;
+  height:40px;
+  /* color:blue; */
+  border: 1px solid #ffffff;
+  margin-left:8px;
+  border-radius:5px;
+  text-align:center;
+  color:white;
+  background-color: #9dc3e6;
+  /* justify-content:center; */
+}
+.centered-text {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100%; /* 使元素高度充满父元素，实现垂直居中 */
 }
 </style>
 

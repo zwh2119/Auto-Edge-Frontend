@@ -186,7 +186,7 @@ export default{
             checkboxes:[],
 
             // 一段时间折线图
-            maxCount:20,
+            maxCount:10,
             delay_list:{},
             objn_list:{},
             objsize_list:{},
@@ -511,6 +511,7 @@ export default{
           this.checkedPic = false;
           this.clearCheckboxes();
           this.updateResultUrl();
+          // this.fetchAndProcessData();
         },
         updateKeyList(){
           // 获取appended_result中的key值
@@ -580,7 +581,6 @@ export default{
 
                 this.objn_list[job_id].push(this.obj_n);
 
-                // 超过个数就移除
                 if(this.objn_list[job_id].length > this.maxCount){
                   this.objn_list[job_id].shift();
                 }
@@ -595,7 +595,6 @@ export default{
 
                 this.objsize_list[job_id].push(this.obj_size);
 
-                // 超过个数就移除
                 if(this.objsize_list[job_id].length > this.maxCount){
                   this.objsize_list[job_id].shift();
                 }
@@ -610,7 +609,6 @@ export default{
 
                 this.objstable_list[job_id].push(this.obj_stable);
 
-                // 超过个数就移除
                 if(this.objstable_list[job_id].length > this.maxCount){
                   this.objstable_list[job_id].shift();
                 }
@@ -618,6 +616,7 @@ export default{
               // console.log("test");
 
               console.log(this.delay_list);
+              
 
               // 出问题:
               // TypeError: Cannot convert undefined or null to object
@@ -642,6 +641,128 @@ export default{
             });
         },
 
+
+        // 异步访问结果
+        async fetchData(url) {
+          try {
+            const response = await fetch(url);
+            const data = await response.json();
+            return data;
+          } catch (error) {
+            throw error;
+          }
+        },
+
+        async fetchAndProcessData() {
+          const jobs = Object.values(this.submit_jobs);
+
+          const loading = ElLoading.service({
+            lock: true,
+            text: "Loading",
+            background: "rgba(0, 0, 0, 0.7)",
+          });
+
+          for (let i = 0; i < jobs.length; i++) {
+            const job = jobs[i];
+            const url = this.resultUrl + job;
+            try {
+              const data = await this.fetchData(url);
+              loading.close();
+              const runtime = data["latest_result"]["runtime"];
+
+              if (runtime && runtime["delay"]) {
+                console.log(jobs[i]);
+                const delay = runtime["delay"].toFixed(2);
+
+                if (!this.delay_list[jobs[i]]) {
+                  console.log(jobs[i]);
+                  this.delay_list[jobs[i]] = [];
+                }
+
+                this.delay_list[jobs[i]].push(delay);
+
+                if (this.delay_list[jobs[i]].length > this.maxCount) {
+                  this.delay_list[jobs[i]].shift();
+                }
+              }
+
+              if (runtime && runtime["obj_n"]) {
+                const obj_n = Math.floor(runtime["obj_n"]);
+
+                if (!this.objn_list[jobs[i]]) {
+                  this.objn_list[jobs[i]] = [];
+                }
+
+                this.objn_list[jobs[i]].push(obj_n);
+
+                if (this.objn_list[jobs[i]].length > this.maxCount) {
+                  this.objn_list[jobs[i]].shift();
+                }
+              }
+
+              if (runtime && runtime["obj_size"]) {
+                const obj_size = runtime["obj_size"].toFixed(2);
+
+                if (!this.objsize_list[jobs[i]]) {
+                  this.objsize_list[jobs[i]] = [];
+                }
+
+                this.objsize_list[jobs[i]].push(obj_size);
+
+                if (this.objsize_list[jobs[i]].length > this.maxCount) {
+                  this.objsize_list[jobs[i]].shift();
+                }
+              }
+
+              if (runtime && runtime["obj_stable"]) {
+                const obj_stable = runtime["obj_stable"];
+
+                if (!this.objstable_list[jobs[i]]) {
+                  this.objstable_list[jobs[i]] = [];
+                }
+
+                this.objstable_list[jobs[i]].push(obj_stable);
+
+                if (this.objstable_list[jobs[i]].length > this.maxCount) {
+                  this.objstable_list[jobs[i]].shift();
+                }
+              }
+
+              // this.updateKeyList();
+
+              // console.log(this.delay_list);
+              // console.log('objn:' + this.objn_list)
+              sessionStorage.setItem(
+                "delay_list",
+                JSON.stringify(this.delay_list)
+              );
+              sessionStorage.setItem(
+                "objn_list",
+                JSON.stringify(this.objn_list)
+              );
+              sessionStorage.setItem(
+                "objsize_list",
+                JSON.stringify(this.objsize_list)
+              );
+              sessionStorage.setItem(
+                "objstable_list",
+                JSON.stringify(this.objstable_list)
+              );
+            } catch (error) {
+              console.log(error);
+              loading.close();
+              ElMessage({
+                showClose: true,
+                message: "结果尚未生成，请稍后重试",
+                type: "error",
+                duration: 1500,
+              });
+              this.result = null;
+            }
+          }
+        },
+
+
         // 更新系统资源状态
         updateResourceUrl() {
           const url = this.resourceUrl;
@@ -654,6 +775,9 @@ export default{
             .catch((err) => {
               console.log(err);
             });
+        },
+        clearTimer() {
+          clearInterval(this.timer);
         },
         
     },
@@ -762,15 +886,20 @@ export default{
     mounted(){
         
         // 获取可查询的任务相关信息 存储在submit_jobs和job_info_dict中
-        const submitJobs = sessionStorage.getItem("submit_jobs");
-        if (submitJobs) {
-            this.submit_jobs = JSON.parse(submitJobs);
+        const delay_list = sessionStorage.getItem("delay_list");
+        if (delay_list) {
+            this.delay_list = JSON.parse(delay_list);
             // console.log(this.submit_jobs);
         }
         const job_info = sessionStorage.getItem("job_info_dict");
         if(job_info){
             this.job_info_dict = JSON.parse(job_info);
             // console.log(this.job_info_dict);
+        }
+
+        const submitJobs = sessionStorage.getItem("submit_jobs");
+        if (submitJobs) {
+          this.submit_jobs = JSON.parse(submitJobs);
         }
         // REMOVE: 静态填充
         this.resource_display = ["cpu_ratio","mem_ratio","gpu_ratio","net_ratio(MBps)"];
@@ -977,12 +1106,18 @@ export default{
     ];
       this.updateKeyList();
 
-        // this.initChart();
-        // this.timer = setInterval(() => {
-        //   this.updateResultUrl();
-        //   this.updateResourceUrl();
-        // }, 8000);
+      // this.initChart();
+      this.timer = setInterval(() => {
+        // this.updateResultUrl();
+        this.fetchAndProcessData();
+        this.updateResourceUrl();
+      }, 3000);
       
+      
+    },
+    beforeDestroy() {
+      // 在组件销毁之前清除定时器
+      this.clearTimer();
     },
 }
 </script>

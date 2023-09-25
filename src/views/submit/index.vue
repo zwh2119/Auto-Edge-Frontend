@@ -462,7 +462,7 @@ data() {
 
       const storedService = sessionStorage.getItem("ipVideoFlowInfo");
       if(storedService){
-        this.ipVideoFlowInfo = storedService;
+        this.ipVideoFlowInfo = JSON.parse(storedService);
       }
       
       this.getInfo();

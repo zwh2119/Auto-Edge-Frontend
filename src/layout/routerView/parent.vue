@@ -1,6 +1,6 @@
 <template>
 	<div class="layout-parent">
-		<router-view v-slot="{ Component }">
+		<router-view v-slot="{ Component }" :key="$route.fullPath">
 			<transition :name="setTransitionName" mode="out-in">
 				<keep-alive :include="getKeepAliveNames">
 					<component :is="Component" :key="state.refreshRouterViewKey" class="w100" v-show="!isIframePage" />

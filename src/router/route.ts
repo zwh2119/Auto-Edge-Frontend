@@ -123,6 +123,21 @@ export const dynamicRoutes: Array<RouteRecordRaw> = [
 					roles: ['admin', 'common'],
 					icon: 'iconfont icon-caidan',
 				},
+			},
+			{
+				path: '/detail',
+				name: 'detail',
+				component: () => import('/@/views/content/detail.vue'),
+				meta: {
+					title: 'message.router.detail',
+					isLink: '',
+					isHide: true,
+					isKeepAlive: true,
+					isAffix: false,
+					isIframe: false,
+					roles: ['admin', 'common'],
+					icon: 'iconfont icon-caidan',
+				},
 			}
 		],
 	},
