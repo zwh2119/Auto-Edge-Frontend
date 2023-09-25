@@ -1,7 +1,7 @@
 <template>
     <div class="outline">
         <div>
-          <h3>现有DAG Workflow</h3>
+          <h3>现有任务流水线</h3>
         </div>
 
         <!-- <el-table :data="dagList" border style="width: 100%">
@@ -54,7 +54,7 @@
         <br>
 <br>
         <div>
-          <h3>新增DAG Workflow</h3>
+          <h3>新增任务流水线</h3>
         </div>
 
         <div>
@@ -85,7 +85,7 @@
         <br/>
 
         <div>
-          <el-button type="primary" round @click="handleNewSubmit">新增Dag</el-button>
+          <el-button type="primary" round @click="handleNewSubmit">提交新增</el-button>
           <!-- <el-button round>修改</el-button>
           <el-button round>删除</el-button> -->
         </div>
@@ -168,7 +168,7 @@ export default {
             fetch('/serv/get-dag-workflows-api') 
             .then(response => response.json())
             .then(data => {
-                // console.log(data);
+                console.log(data);
                 // 成功获取数据后，更新dagList字段
                 this.dagList = data;
             })

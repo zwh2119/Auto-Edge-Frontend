@@ -455,21 +455,25 @@ export default{
           // console.log(this.submit_job);
           const url = this.resultUrl + this.submit_job;
           // console.log(url);
-          const loading = ElLoading.service({
-            lock: true,
-            text: "Loading",
-            background: "rgba(0, 0, 0, 0.7)",
-          });
+          // const loading = ElLoading.service({
+          //   lock: true,
+          //   text: "Loading",
+          //   background: "rgba(0, 0, 0, 0.7)",
+          // });
           fetch(url)
             .then((response) => response.json())
             .then((data) => {
-              loading.close();
-              // console.log(data);
-              this.result = data;
-              this.appended_result = this.result["appended_result"];
-              this.runtime = this.result["latest_result"]["runtime"];
-              this.plan = this.result["latest_result"]["plan"];         
+              // loading.close();       
               // console.log(this.runtime);
+
+              this.appended_result = data['appended_result'];
+              // console.log(this.appended_result);
+              const result = this.appended_result;
+              const len = this.appended_result.length;
+              // console.log(len);
+              this.runtime = result[len - 1]['ext_runtime'];
+              this.plan = result[len - 1]['ext_plan'];
+
               // 应用情境
               if (this.runtime && this.runtime["delay"]) {
                 this.delay = this.runtime["delay"].toFixed(2);
@@ -496,14 +500,14 @@ export default{
             })
             .catch((error) => {
               console.log(error);
-              loading.close();
-              ElMessage({
-                showClose: true,
-                message: "结果尚未生成,请稍后",
-                type: "error",
-                duration: 1500,
-              });
-              this.result = null;
+              // loading.close();
+              // ElMessage({
+              //   showClose: true,
+              //   message: "结果尚未生成,请稍后",
+              //   type: "error",
+              //   duration: 1500,
+              // });
+              // this.result = null;
             });
         },
 
@@ -906,10 +910,10 @@ export default{
             { key: "1080p", ui_value: "1920x1080" },
         ];
         // this.initChart();
-        // this.timer = setInterval(() => {
-        //   this.updateResultUrl();
+        this.timer = setInterval(() => {
+          this.updateResultUrl();
           this.updateResourceUrl();
-        // }, 6000);
+        }, 6000);
     },
 }
 </script>

@@ -81,6 +81,7 @@
           3.整体布局
         -->
         <el-card shadow="hover" style="margin: 20px;">
+          <!-- {{ runtime }} -->
           <!-- 原始视频流显示 -->
           <!-- <el-row>
             <el-col :span="12">
@@ -112,12 +113,12 @@
 
           <!-- 画布容器 -->
           <div>
-            <div v-show="showOriginal" style="width: 400px; height: 250px; margin-top: 20px; float: left;">
+            <div v-show="showOriginal" style="width: 500px; height: 250px; margin-top: 20px; float: left;">
               <img :src="videoUrl + selected" style="width: 100%; height: 90%;" />
             </div>
             
-            <div v-for="(item, idx) in keyList" :key="idx" style="float: left;">
-              <div v-show="showChart(item)" :id="item" style="width: 400px; height: 250px; margin-top: 20px;"></div>
+            <div v-for="(item, idx) in keyList" :key="idx" style="float: left;margin-left: 20px;">
+              <div v-show="showChart(item)" :id="item" style="width: 500px; height: 250px; margin-top: 20px;"></div>
             </div>
           </div>
 
@@ -527,6 +528,7 @@ export default{
             }
           }
           this.keyList = resKeyList;
+          console.log(this.keyList);
         },
         // 清除复选框勾选状态
         
@@ -535,7 +537,7 @@ export default{
           this.checkboxes = this.checkboxes.map(() => false);
         },
         // 查询结果
-        updateResultUrl() {
+        updateResultUrlOld() {
           // console.log(this.submit_job);
           const url = this.resultUrl + this.submit_job;
           // console.log(url);
@@ -554,6 +556,121 @@ export default{
               this.runtime = this.result["latest_result"]["runtime"];
               this.plan = this.result["latest_result"]["plan"];         
               // console.log(this.runtime);
+
+              // 应用情境
+              const job_id = this.submit_job;
+              if (this.runtime && this.runtime["delay"]) {
+                this.delay = this.runtime["delay"].toFixed(2);
+                
+                if(!this.delay_list[this.submit_job]){
+                  this.delay_list[job_id] = [];
+                }
+
+                this.delay_list[job_id].push(this.delay);
+
+                // 超过个数就移除
+                if(this.delay_list[job_id].length > this.maxCount){
+                  this.delay_list[job_id].shift();
+                }
+              }
+
+              if (this.runtime && this.runtime["obj_n"]) {
+                this.obj_n = Math.floor(this.runtime["obj_n"]);
+
+                if(!this.objn_list[this.submit_job]){
+                  this.objn_list[job_id] = [];
+                }
+
+                this.objn_list[job_id].push(this.obj_n);
+
+                if(this.objn_list[job_id].length > this.maxCount){
+                  this.objn_list[job_id].shift();
+                }
+              } 
+
+              if (this.runtime && this.runtime["obj_size"]) {
+                this.obj_size = this.runtime["obj_size"].toFixed(2);
+
+                if(!this.objsize_list[this.submit_job]){
+                  this.objsize_list[job_id] = [];
+                }
+
+                this.objsize_list[job_id].push(this.obj_size);
+
+                if(this.objsize_list[job_id].length > this.maxCount){
+                  this.objsize_list[job_id].shift();
+                }
+              }
+
+              if (this.runtime && this.runtime["obj_stable"]) {
+                this.obj_stable = this.runtime["obj_stable"];
+
+                if(!this.objstable_list[this.submit_job]){
+                  this.objstable_list[job_id] = [];
+                }
+
+                this.objstable_list[job_id].push(this.obj_stable);
+
+                if(this.objstable_list[job_id].length > this.maxCount){
+                  this.objstable_list[job_id].shift();
+                }
+              }
+              // console.log("test");
+
+              console.log(this.delay_list);
+              
+
+              // 出问题:
+              // TypeError: Cannot convert undefined or null to object
+              // at Function.keys (<anonymous>)
+              // at Proxy.updateKeyList (index.vue:462:35)
+              // at index.vue:509:20
+              this.updateKeyList();
+
+              // this.drawResult();
+              // console.log("test2");
+            })
+            .catch((error) => {
+              console.log(error);
+              loading.close();
+              ElMessage({
+                showClose: true,
+                message: "结果尚未生成,请稍后",
+                type: "error",
+                duration: 1500,
+              });
+              this.result = null;
+            });
+        },
+        // 查询结果
+        updateResultUrl() {
+          // console.log(this.submit_job);
+          const url = this.resultUrl + this.submit_job;
+          // console.log(url);
+          const loading = ElLoading.service({
+            lock: true,
+            text: "Loading",
+            background: "rgba(0, 0, 0, 0.7)",
+          });
+          fetch(url)
+            .then((response) => response.json())
+            .then((data) => {
+              loading.close();
+              // console.log(data);
+              // this.runtime = this.result["latest_result"]["runtime"];
+              // this.plan = this.result["latest_result"]["plan"];         
+              // console.log(this.runtime);
+
+              this.result = data;
+              // console.log("new data:" + data);
+              loading.close();
+              this.appended_result = data['appended_result'];
+              // console.log(this.appended_result);
+              const result = this.appended_result;
+              const len = this.appended_result.length;
+              // console.log(len);
+              this.runtime = result[len - 1]['ext_runtime'];
+              this.plan = result[len - 1]['ext_plan'];
 
               // 应用情境
               const job_id = this.submit_job;
@@ -667,6 +784,7 @@ export default{
             const url = this.resultUrl + job;
             try {
               const data = await this.fetchData(url);
+              // console.log("new data:" + data);
               loading.close();
               const runtime = data["latest_result"]["runtime"];
 
@@ -1107,11 +1225,11 @@ export default{
       this.updateKeyList();
 
       // this.initChart();
-      this.timer = setInterval(() => {
-        // this.updateResultUrl();
-        this.fetchAndProcessData();
-        this.updateResourceUrl();
-      }, 3000);
+      // this.timer = setInterval(() => {
+      //   this.updateResultUrl();
+      //   // this.fetchAndProcessData();
+      //   this.updateResourceUrl();
+      // }, 6000);
       
       
     },
@@ -1148,59 +1266,6 @@ export default{
   border: 2px solid rgb(77, 77, 77);
   margin: 5px;
   border-radius: 5px;
-}
-.info-box {
-  /* height: 80px; */
-  /* border: 2px dashed grey; */
-  margin: 20px;
-  display: flex;
-  /* border-radius: 10px; */
-}
-
-.info-h1 {
-  width: min-content;
-  white-space: nowrap;
-  text-align: center;
-  color: #2f74ff;
-  font-weight: 750;
-  line-height: 20px;
-  border: 2px dashed rgb(77, 77, 77);
-  margin: 5px;
-  padding: 5px;
-  border-radius: 5px;
-}
-.info-h1-flex-text {
-  display: flex;
-  align-items: center;
-}
-.info-h2 {
-  width: min-content;
-  height: min-content;
-  white-space: nowrap;
-  text-align: center;
-  color: #2f74ff;
-  background-color: rgb(220, 220, 220);
-  /* line-height: 20px; */
-  /* border: 2px dashed rgb(77, 77, 77); */
-  /* margin: 5px; */
-  /* padding: 5px; */
-  font-weight: 500;
-  border-left: 5px solid rgb(77, 77, 77);
-  border-radius: 5px;
-  margin: 5px;
-  padding-left: 10px;
-  padding-right: 10px;
-  margin-left: 40px;
-  margin-right: 5px;
-}
-.info-h2-flex-text {
-  display: flex;
-  align-items: center;
-  margin: 5px;
-}
-.info-h2-flex-text-items {
-  margin-right: 10px;
-  border-bottom: 2px dashed #2f74ff;
 }
 .carousel-item-content {
   display: flex;
@@ -1287,18 +1352,3 @@ select {
 }
 </style>
 
-<style lang="scss" scoped>
-:deep(.user-radio) {
-  // ::v-deep .user-radio {
-  .el-radio-button__inner {
-    color: #ffffff;
-    border: 1px solid #ffffff;
-    // border-radius: 4px;
-    background: #dcdcdc;
-  }
-
-  .el-radio-button__original-radio:disabled:checked + .el-radio-button__inner {
-    background-color: #2f74ff;
-  }
-}
-</style>
