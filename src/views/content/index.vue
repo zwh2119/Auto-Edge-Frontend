@@ -82,7 +82,8 @@
                       </div>
 
                       <div class="canvas-container">
-                          <div class="inner-div">
+                        <!-- {{ obj_size }} -->
+                          <div v-show="obj_size" class="inner-div">
                               <span>目标大小</span>
                               <canvas ref="objSizeCanvas" width="150" height="150"></canvas>
                           </div>
@@ -346,17 +347,17 @@ export default{
       },
         getSelectedNode(h1_value,h2_k){
             const proIP = h1_value[h2_k]['node_ip'];
-            console.log("处理IP:" + proIP);
+            // console.log("处理IP:" + proIP);
             const submitIP = this.selectedJob['selectedIp'].split(':')[0];
-            console.log("提交IP:" + submitIP);
+            // console.log("提交IP:" + submitIP);
             if(proIP === submitIP){
-              console.log("host");
+              // console.log("host");
               return "host";
             }else if(proIP === "114.212.81.11"){
-              console.log("cloud");
+              // console.log("cloud");
               return "cloud";
             }
-            console.log("edge");
+            // console.log("edge");
             return "edge";
         },
         
@@ -449,66 +450,73 @@ export default{
           this.submit_job = job_id;
           this.updateResultUrl();
         },
+        clearCanvas(canvas){
+          const context = canvas.getContext('2d');
+          context.clearRect(0, 0, canvas.width, canvas.height);
+        },
 
         // 查询结果
         updateResultUrl() {
           // console.log(this.submit_job);
-          const url = this.resultUrl + this.submit_job;
-          // console.log(url);
-          // const loading = ElLoading.service({
-          //   lock: true,
-          //   text: "Loading",
-          //   background: "rgba(0, 0, 0, 0.7)",
-          // });
-          fetch(url)
-            .then((response) => response.json())
-            .then((data) => {
-              // loading.close();       
-              // console.log(this.runtime);
+          if(this.submit_job){
+            const url = this.resultUrl + this.submit_job;
+            // console.log(url);
+            // const loading = ElLoading.service({
+            //   lock: true,
+            //   text: "Loading",
+            //   background: "rgba(0, 0, 0, 0.7)",
+            // });
+            fetch(url)
+              .then((response) => response.json())
+              .then((data) => {
+                // loading.close();       
+                // console.log(this.runtime);
 
-              this.appended_result = data['appended_result'];
-              // console.log(this.appended_result);
-              const result = this.appended_result;
-              const len = this.appended_result.length;
-              // console.log(len);
-              this.runtime = result[len - 1]['ext_runtime'];
-              this.plan = result[len - 1]['ext_plan'];
+                this.appended_result = data['appended_result'];
+                // console.log(this.appended_result);
+                const result = this.appended_result;
+                const len = this.appended_result.length;
+                // console.log(len);
+                this.runtime = result[len - 1]['ext_runtime'];
+                this.plan = result[len - 1]['ext_plan'];
 
-              // 应用情境
-              if (this.runtime && this.runtime["delay"]) {
-                this.delay = this.runtime["delay"].toFixed(2);
-              }
+                // 应用情境
+                if (this.runtime && this.runtime["delay"]) {
+                  this.delay = this.runtime["delay"].toFixed(2);
+                }
 
-              if (this.runtime && this.runtime["obj_n"]) {
-                this.obj_n = Math.floor(this.runtime["obj_n"]);
-              } 
+                if (this.runtime && this.runtime["obj_n"]) {
+                  this.obj_n = Math.floor(this.runtime["obj_n"]);
+                } 
 
-              if (this.runtime && this.runtime["obj_size"]) {
-                this.obj_size = this.runtime["obj_size"].toFixed(2);
-              }
+                if (this.runtime && this.runtime["obj_size"]) {
+                  this.obj_size = this.runtime["obj_size"].toFixed(2);
+                }
 
-              if (this.runtime && this.runtime["obj_stable"]) {
-                this.obj_stable = this.runtime["obj_stable"];
-              }
+                if (this.runtime && this.runtime["obj_stable"]) {
+                  this.obj_stable = this.runtime["obj_stable"];
+                }
 
-              this.drawCircle(this.$refs.delayCanvas,this.delay,1,'#5b9bd5');
-              this.drawCircle(this.$refs.objNumCanvas,this.obj_n,1,'#c5e0b4');
-              this.drawCircle(this.$refs.objSizeCanvas,this.obj_size,1,'#ffd966');
-              this.drawCircle(this.$refs.objStableCanvas,this.obj_stable,1,'#f4b183');
-            //   this.drawResult();
-                
-            })
-            .catch((error) => {
-              console.log(error);
-              // loading.close();
-              // ElMessage({
-              //   showClose: true,
-              //   message: "结果尚未生成,请稍后",
-              //   type: "error",
-              //   duration: 1500,
-              // });
-              // this.result = null;
-            });
+                this.drawCircle(this.$refs.delayCanvas,this.delay,1,'#5b9bd5');
+                this.drawCircle(this.$refs.objNumCanvas,this.obj_n,1,'#c5e0b4');
+                this.drawCircle(this.$refs.objSizeCanvas,this.obj_size,1,'#ffd966');
+                this.drawCircle(this.$refs.objStableCanvas,this.obj_stable,1,'#f4b183');
+              //   this.drawResult();
+                  
+              })
+              .catch((error) => {
+                console.log(error);
+                // loading.close();
+                // ElMessage({
+                //   showClose: true,
+                //   message: "结果尚未生成,请稍后",
+                //   type: "error",
+                //   duration: 1500,
+                // });
+                // this.result = null;
+              });
+          }
+          
         },
 
         // 更新系统资源状态
@@ -914,6 +922,9 @@ export default{
           this.updateResultUrl();
           this.updateResourceUrl();
         }, 6000);
+    },
+    beforeUnmount() {
+      clearInterval(this.timer);
     },
 }
 </script>

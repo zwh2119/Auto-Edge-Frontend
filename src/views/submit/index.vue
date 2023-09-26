@@ -392,7 +392,7 @@ data() {
                 type: this.info[this.selectedIp][this.selectedVideoId]["type"],
                 mode: this.selectedMode, // 优化模式
                 delay_constraint: this.delay_constraint,
-                acc_constraint:this.delay_constraint
+                acc_constraint:this.acc_constraint,
               }
 
               this.job_info_dict[data.query_id] = job_info;
