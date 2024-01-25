@@ -2,11 +2,8 @@
 export default {
 	router: {
 		home: '首页',
-		service: '服务安装与配置',
-		submit:'数据流服务',
-		result:'视频流分析结果',
-		content:'运行时情境与调度配置',
-		detail:'运行时细节展示',
+		start: '服务启动',
+		info: '系统详情',
 	},
 	staticRoutes: {
 		signIn: '登录',

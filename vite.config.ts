@@ -34,43 +34,11 @@ const viteConfig = defineConfig((mode: ConfigEnv) => {
 					changeOrigin: true,
 					rewrite: (path) => path.replace(/^\/gitee/, ''),
 				},
-				'/dag': {
-					// target: "http://192.168.56.102:5000",
-			
-					// target: "http://114.212.81.11:5000",
+				'/api': {
 					target: "http://114.212.81.11:6000",
-			
-					// target: "http://172.27.134.58:5000",
-					// target: "http://127.0.0.1:5000",
-			
 					changeOrigin: true,
-					rewrite: path => path.replace(/^\/dag/, '')
-				  },
-				  '/serv': {
-					// target: "http://192.168.56.102:5500",
-					// target: "http://192.168.56.102:5700",
-			
-					// target: "http://114.212.81.11:5500",
-					target: "http://114.212.81.11:6500",
-			
-					// target: "http://172.27.134.58:5500",
-					// target: "http://127.0.0.1:5000",
-			
-					changeOrigin: true,
-					rewrite: path => path.replace(/^\/serv/, '')
-				  },
-				  '/video': {
-					// target: "http://192.168.56.102:5100",
-			
-					// target: "http://114.212.81.11:5100",
-					target: "http://114.212.81.11:6100",
-			
-					// target: "http://172.27.134.58:5100",
-					// target: "http://127.0.0.1:5000",
-			
-					changeOrigin: true,
-					rewrite: path => path.replace(/^\/video/, '')
-				  },
+					rewrite: path => path.replace(/^\/api/, '')
+				},
 			},
 		},
 		build: {
