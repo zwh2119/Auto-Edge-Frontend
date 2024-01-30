@@ -42,7 +42,7 @@ export const dynamicRoutes: Array<RouteRecordRaw> = [
 		path: '/',
 		name: '/',
 		component: () => import('/@/layout/index.vue'),
-		redirect: '/home',
+		redirect: '/start',
 		meta: {
 			isKeepAlive: true,
 		},
@@ -65,7 +65,7 @@ export const dynamicRoutes: Array<RouteRecordRaw> = [
 			{
 				path: '/start',
 				name: 'start',
-				component: () => import('/@/views/submit/start.vue'),
+				component: () => import('/@/views/submit/Start.vue'),
 				meta: {
 					title: 'message.router.start',
 					isLink: '',
@@ -74,13 +74,13 @@ export const dynamicRoutes: Array<RouteRecordRaw> = [
 					isAffix: false,
 					isIframe: false,
 					roles: ['admin', 'common'],
-					icon: 'iconfont icon-shuxing',
+					icon: 'iconfont icon-xingqiu',
 				},
 			},
 			{
 				path: '/info',
 				name: 'info',
-				component: () => import('/@/views/info/info.vue'),
+				component: () => import('/@/views/submit/SysInfo.vue'),
 				meta: {
 					title: 'message.router.info',
 					isLink: '',
@@ -89,7 +89,22 @@ export const dynamicRoutes: Array<RouteRecordRaw> = [
 					isAffix: false,
 					isIframe: false,
 					roles: ['admin', 'common'],
-					icon: 'iconfont icon-shuxing',
+					icon: 'iconfont icon-diannao1',
+				},
+			},
+			{
+				path: '/result',
+				name: 'result',
+				component: () => import('../views/result/ResultView.vue'),
+				meta: {
+					title: 'message.router.result',
+					isLink: '',
+					isHide: false,
+					isKeepAlive: true,
+					isAffix: false,
+					isIframe: false,
+					roles: ['admin', 'common'],
+					icon: 'iconfont icon-shenqingkaiban',
 				},
 			},
 		],

@@ -21,6 +21,8 @@
   
   <script>
 import { ref } from 'vue';
+import { ElMessage } from 'element-plus';
+
 import axios from 'axios';
 
 export default {
@@ -31,12 +33,19 @@ export default {
 		const handleSubmit = async () => {
 			try {
 				const formData = {
-					'service-name': serviceName.value,
+					service_name: serviceName.value,
 					time: time.value,
 				};
 
 				const response = await axios.post('/api/free', formData);
+				console.log('Submission successful:', response.data.msg);
 				console.log('Submission successful:', response.data);
+				ElMessage({
+					message: '提交成功',
+					showClose: true,
+					type: 'success',
+					duration: 3000,
+				});
 			} catch (error) {
 				console.error('Submission failed', error);
 			}

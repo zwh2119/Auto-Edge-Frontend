@@ -8,18 +8,20 @@
 					<el-select v-model="selectedDetectionIndex" @change="handleChange" placeholder="请选择任务">
 						<el-option v-for="(option, index) in detectionOptions" :key="index" :label="option.chineseLabel" :value="index"></el-option>
 					</el-select>
-					<el-button style="margin-left: 20px" type="primary" @click="handleSubmit">提交</el-button>
+					<el-button style="margin-left: 20px" type="primary" @click="handleSubmit" :loading="loading">提交</el-button>
 				</el-form-item>
 			</el-form>
 		</el-card>
 		<Free />
+		<el-loading :visible="loading" text="提交中，请稍候..." fullscreen></el-loading>
+		<!-- <el-alert v-if="successMessage" title="提交成功" type="success" :closable="false">{{ successMessage }}</el-alert> -->
 	</div>
 </template>
   
-  <script>
+<script>
 import { ref, onMounted } from 'vue';
 import axios from 'axios';
-import { ElCard, ElForm, ElFormItem, ElSelect, ElOption, ElButton } from 'element-plus';
+import { ElCard, ElForm, ElFormItem, ElSelect, ElOption, ElButton, ElLoading, ElMessage, ElAlert } from 'element-plus';
 import Free from './Free.vue';
 
 export default {
@@ -30,11 +32,15 @@ export default {
 		ElSelect,
 		ElOption,
 		ElButton,
+		ElLoading,
+		ElMessage,
+		ElAlert,
 		Free,
 	},
 	setup() {
 		const selectedDetectionIndex = ref(null);
-		const result = ref('');
+		const successMessage = ref('');
+		const loading = ref(false);
 		const detectionOptions = ref([]);
 
 		onMounted(async () => {
@@ -57,27 +63,40 @@ export default {
 		});
 
 		const handleChange = () => {
-			result.value = '';
+			successMessage.value = '';
 		};
 
 		const handleSubmit = async () => {
+			loading.value = true;
 			try {
 				const index = selectedDetectionIndex.value;
 				if (index !== null && index >= 0 && index < detectionOptions.value.length) {
 					const englishLabel = detectionOptions.value[index].englishLabel || '';
 					const response = await axios.post('/api/start', { service_name: englishLabel });
-					result.value = response.data.result;
+					const data = response.data;
+					successMessage.value = data['msg'];
+					console.log(successMessage.value);
+					ElMessage({
+						message: '提交成功',
+						showClose: true,
+						type: 'success',
+						duration: 3000,
+					});
+					loading.value = false;
 				} else {
 					console.error('Invalid selected index.');
 				}
 			} catch (error) {
+				loading.value = false;
 				console.error('Submission failed', error);
+				ElMessage.error('上传失败');
 			}
 		};
 
 		return {
 			selectedDetectionIndex,
-			result,
+			successMessage,
+			loading,
 			detectionOptions,
 			handleChange,
 			handleSubmit,
@@ -86,11 +105,10 @@ export default {
 };
 </script>
   
-  <style scoped>
+<style scoped>
 .form-header {
 	font-size: 20px;
 	font-weight: bold;
 	margin-bottom: 20px;
 }
 </style>
-  

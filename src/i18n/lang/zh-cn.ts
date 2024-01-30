@@ -4,6 +4,7 @@ export default {
 		home: '首页',
 		start: '服务启动',
 		info: '系统详情',
+		result: '结果查看',
 	},
 	staticRoutes: {
 		signIn: '登录',
