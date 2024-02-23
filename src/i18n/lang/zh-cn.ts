@@ -3,8 +3,10 @@ export default {
 	router: {
 		home: '首页',
 		start: '服务启动',
+		install:'服务安装',
 		info: '系统详情',
 		result: '结果查看',
+		submit:'提交任务'
 	},
 	staticRoutes: {
 		signIn: '登录',

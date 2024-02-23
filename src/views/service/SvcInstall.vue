@@ -1,62 +1,47 @@
 <template>
       <!-- <el-card class="box-card"> -->
-      <form @submit.prevent="uploadFiles">
+      <form @submit.prevent="submitService">
         <div>
           <div>
-            <h3>选择服务配置文件</h3>
+            <h3>选择服务类型</h3>
           </div>
           <div>
-            <input
-              ref="jsonInput"
-              type="file"
-              accept=".json"
-              class="input-font"
-            />
+            <el-form label-width="100px">
+              <!-- <el-form-item label="选择任务"> -->
+                <el-select v-model="selectedDetectionIndex" @change="handleChange" placeholder="请选择任务">
+                  <el-option v-for="(option, index) in detectionOptions" :key="index" :label="option.chineseLabel" :value="index"></el-option>
+                </el-select>
+            </el-form>
           </div>
         </div>
         <br>
         <div>
-          <h3>选择服务代码</h3>
+          <h3>选择容器镜像</h3>
+          <!-- TODO: 访问后端 提供下拉框进行镜像选择 -->
         </div>
         <div>
-          <el-button type="info" round @click="addFileInput">+</el-button>
-          <el-button type="info" round @click="removeFileInput">-</el-button>
-        </div>
-        <br>
-        <div v-for="(fileInput, index) in fileInputs" :key="index">
-          <div>
-            <input
-              type="text"
-              placeholder="请输入阶段名"
-              v-model="fileInputs[index].name"
-            />
+          
+          <div v-for="(stage, index) in selectedImages" :key="index" style="margin-top: 10px;">
+            <p>{{ stage.stage_name }}</p>
+            <!-- <el-select v-model="stage.selected" placeholder="Select image"> -->
+            <el-select v-model="stage.selected" @change="updateSelection(index,stage,stage.selected)" placeholder="Select image">
+              <el-option
+                v-for="item in stage.image_list"
+                :key="item.image_name"
+                :label="item.image_name"
+                :value="item.image_name + '-' + item.url"
+                
+              ></el-option>
+            </el-select>
+            <p v-if="stage.selected"
+             style="margin-top: 10px; font-size: 14px;">{{ stage.selected.split('-')[1]  }}</p>
           </div>
-          <div>
-            <input
-              ref="codeInput"
-              type="file"
-              accept=".zip"
-              @change="
-                [
-                  (fileInputs[index].file = $event.target.files[0]),
-                  updateFileName($event, index),
-                ]
-              "
-            />
-          </div>
-          <!-- <div>
-            <input
-              ref="codeCtx"
-              type="file"
-              accept=".json"
-              @change=""
-            />
-          </div> -->
         </div>
   
-        <!-- <el-button type="primary" plain native-type="submit">Submit</el-button> -->
         <div>
-          <el-button type="primary" round native-type="submit" :loading="loading"
+          <el-button type="primary" round native-type="submit" 
+          :loading="loading" :disabled="installed === 'install'"
+          style="margin-top: 10px;"
             >安装服务</el-button>
         </div>
       </form>
@@ -65,74 +50,105 @@
   <script>
   import { ElButton } from "element-plus";
   import { ElMessage } from "element-plus";
+  import axios from 'axios';
   export default {
     components: {
       ElButton,
     },
+    props: ['detectionOptions','installed'],
     data() {
       return {
-        fileInputs: [],
+        selectedImages: [],
+        imageList:[],
         loading: false,
+        selectedDetectionIndex:null,
+        // detectionOptions:[],
+        selectedUrls: {},
+        successMessage: '',
+        // installed: null, // install:已安装, uninstall:未安装
+        stageMessage:null,
+        loading:false
       };
     },
+    
     methods: {
-      updateFileName(event, index) {
-        const fileName = event.target.files[0].name;
-        const fileNameWithoutExtension = fileName
-          .split(".")
-          .slice(0, -1)
-          .join(".");
-        this.fileInputs[index].name = fileNameWithoutExtension;
+      updateSelection(index,stage,selected){
+        this.imageList[index] = selected.split('-')[0];
+        console.log(this.installed)
       },
-      addFileInput() {
-        this.fileInputs.push({ name: "", file: null });
-      },
-      removeFileInput() {
-        this.fileInputs.pop();
-      },
-      uploadFiles() {
-        this.loading = true;
-        const jsonFile = this.$refs.jsonInput.files[0];
-        const formData = new FormData();
-        formData.append("task_json", jsonFile);
-        for (let i = 0; i < this.fileInputs.length; i++) {
-          const codeFile = this.fileInputs[i].file;
-          formData.append(this.fileInputs[i].name, codeFile);
-        }
-        console.log(formData);
-  
-        const controller = new AbortController();
-        const signal = controller.signal;
-  
-        const timeout = setTimeout(() => {
-          controller.abort();
-          this.loading = false;
-          alert("上传超时，提交失败！");
-        }, 30000);
-        fetch("/serv/upload-json-and-codefiles-api", {
-          method: "POST",
-          body: formData,
-          signal: signal,
-        })
-          .then((response) => {
-            clearTimeout(timeout); // 清除超时定时器
-            if (!response.ok) {
-              alert("提交失败！");
-              throw new Error("Network response was not ok");
+      async handleChange() {
+			  this.successMessage = '';
+        try {
+          const index = this.selectedDetectionIndex;
+          if (index !== null && index >= 0 && index < this.detectionOptions.length) {
+            const englishLabel = this.detectionOptions[index].englishLabel || '';
+            console.log(englishLabel);
+            // to get task stage
+            const response = await axios.get(`/api/get_task_stage/${englishLabel}`);
+            const data = response.data;
+            this.stageMessage = data;
+            for(var i = 0;i < data.length;i ++){
+              this.selectedImages.push(data[i]);
+              // console.log(data[i])
+              this.imageList.push('');
             }
-            alert("提交成功！");
-            return response.text();
-          })
+          } else {
+            console.error('Invalid selected index.');
+          }
+        } catch (error) {
+          console.error('Submission failed', error);
+        }
+		},
+    submitService(){
+      const index = this.selectedDetectionIndex;
+      if (index !== null && index >= 0 && index < this.detectionOptions.length) {
+        const taskName = this.detectionOptions[index].englishLabel || '';
+        const image_list = Object.values(this.imageList);
+        if (image_list.includes('')) {
+            ElMessage.error('请为所有阶段选择镜像');
+            return; // 提前结束方法
+        }
+
+        console.log(taskName);
+        console.log(image_list);
+        const content = {
+          'task_name':taskName,
+          'image_list':image_list
+        }
+        this.loading = true;
+        fetch('/api/install',{
+          method: "POST",
+          body:content
+        }).then((response) => response.json())
           .then((data) => {
-            console.log(data);
-          })
-          .catch((error) => {
-            console.error("There was a problem with the fetch operation:", error);
-          })
-          .finally(() => {
-            this.loading = false;
-          });
-      },
+              const state = data.state;
+              const msg = data.msg;
+              this.loading = false;
+              if(state === 'success'){
+                ElMessage({
+                  message: msg,
+                  showClose: true,
+                  type: "success",
+                  duration: 3000,
+                });
+              }else{
+                ElMessage({
+                  message: msg,
+                  showClose: true,
+                  type: "error",
+                  duration: 3000,
+                });
+              }
+              // location.reload();
+            }).catch((error) => {
+              this.loading = false;
+              console.error(error);
+              ElMessage.error("网络故障,上传失败");
+            });
+      }
+      
+    },
+      
     },
   };
   </script>

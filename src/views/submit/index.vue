@@ -56,32 +56,7 @@
         </el-card>
 
         
-        <el-card shadow="hover" style="margin: 20px;">
-          <div slot="header" style="font-size: 20px;font-weight: bold;">当前配置情况</div>
-          <!-- {{ ipVideoFlowInfo }} -->
-          <el-table :data="ipVideoFlowInfo" style="width: 100%">
-              <el-table-column label="IP地址" width="300">
-              <template #default="scope">
-                  <div style="display: flex; align-items: center">
-                  <!-- <el-icon><timer /></el-icon> -->
-                  <span style="margin-left: 10px">{{ scope.row.selectedIp }}</span>
-                  </div>
-              </template>
-              </el-table-column>
-              <el-table-column label="摄像头ID" width="200">
-              <template #default="scope">
-                  <div>{{ scope.row.selectedVideoId }}</div>
-              </template>
-              </el-table-column>
-              <el-table-column label="当前配置套餐" width="500">
-              <template #default="scope">
-                  <div>{{ scope.row.selectedFlow['dag_name'] }}</div>
-              </template>
-              </el-table-column>
-              
-          </el-table>
-
-        </el-card>
+  
         
 
         <!-- 设置任务约束 -->
@@ -90,59 +65,18 @@
           <el-row>
             <el-col :span="12">
             
-
-              <table style="margin-top: 30px;">
-                <tr>
-                  <td><span class="param">选择处理流水线</span></td>
-                  <td>
-                    <div class="custom-select" style="margin-left: 50px;">
-                    <!-- <select v-model="selectedFlow">
-                      <option value="" disabled selected>选择处理流水线</option>
-                      <option 
-                        v-for="item in flows"
-                        :key="item['dag_name']"
-                        :value="item['dag']"
-                      >
-                        {{ item['dag_name'] }}
-                      </option>
-                    </select> -->
-                    <select v-model="selectedFlow">
-                      <option value="" disabled selected>选择处理流水线</option>
-                      <option 
-                        v-for="item in flows"
-                        :key="item['dag_name']"
-                        :value="{ 'dag': item['dag'], 'dag_name': item['dag_name'] }"
-                      >
-                        {{ item['dag_name'] }}
-                      </option>
-                    </select>
-
-                    
-                    <span class="custom-arrow">&#9662;</span>
-                  </div>
-                  </td>
-                </tr>
-
-                <tr style="margin-top: 30px;">
-                  <td><span class="param">选择优化模式</span></td>
-
-                  <td>
-                    <div class="custom-select" style="margin-left: 50px;">
-                    <select v-model="selectedMode">
-                      <option value="" disabled selected>选择优化模式</option>
-                      <option 
-                        v-for="item in options"
-                        :key="item.value"
-                        :value="item.value"
-                      >
-                        {{ item.label }}
-                      </option>
-                    </select>
-                    <span class="custom-arrow">&#9662;</span>
-                  </div>
-                  </td>
-                </tr>
-              </table>
+              <div style="flex: 1;margin-top: 30px;">
+                <div>
+                  <span class="param" style="margin-right: 20px;">紧急程度(0-1)</span>
+                  <el-input v-model="delay_constraint" placeholder="输入时延约束" style="width: 100%; max-width: 200px;margin-left: 63px;" />
+                </div>
+                <div style="margin-top: 10px;">
+                  
+                  <span class="param" style="margin-right: 20px;">重要程度(0-1)</span>
+                  <el-input v-model="acc_constraint" placeholder="输入精度约束" style="width: 100%; max-width: 200px;" />
+                </div>
+              </div>
+              
               
             
             </el-col>

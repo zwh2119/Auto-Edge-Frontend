@@ -173,7 +173,8 @@ export default {
                 this.dagList = data;
             })
             .catch(error => {
-                console.error('Error fetching data:', error);
+                // console.error('Error fetching data:', error);
+                console.error('Error fetching data');
             });
         },
         fetchData(){
@@ -192,7 +193,8 @@ export default {
             console.log('Data sent successfully:', data);
           })
           .catch(error => {
-            console.error('Error sending data:', error);
+            // console.error('Error sending data:', error);
+            console.error('Error sending data');
           });
         },
         async getServiceList() {

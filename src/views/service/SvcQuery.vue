@@ -1,7 +1,7 @@
 <template>
     <div class="outline">
         <div>
-            <h3>已安装服务</h3>
+            <h3>已下装服务容器</h3>
         </div>
       <ul style="list-style-type: none" class="svc-container">
         <li
@@ -26,29 +26,35 @@
         <table>
         <thead>
             <tr>
-            <th>ip</th>
-            <th>mem_ratio</th>
-            <th>cpu_ratio</th>
-            <th>n_cpu</th>
-            <th>url</th>
+            <th>ip地址</th>
+            <th>主机名</th>
+            <th>CPU使用率</th>
+            <th>内存使用率</th>
+            <th>带宽</th>
+            <th>存活时间</th>
             </tr>
         </thead>
         <tbody>
-            <tr v-for="(value, key) in urlData" class="outer-li">
-            <td>{{ key }}</td>
-            <td>{{ value.mem_ratio }}</td>
-            <td>{{ value.cpu_ratio }}</td>
-            <td>{{ value.n_cpu }}</td>
-            <td><a :href="value.url">{{ value.url }}</a></td>
+            <tr v-for="item in urlData" class="outer-li">
+              <td>{{ item.ip }}</td>
+              <td>{{ item.hostname }}</td>
+              <td>{{ item.cpu }}</td>
+              <td>{{ item.memory }}</td>
+              <td>{{ item.bandwidth }}</td>
+              <td>{{ item.age }}</td>
             </tr>
         </tbody>
         </table>
+    </div>
+    <div style="text-align: right; margin-top: 20px;">
+      <el-button type="danger" @click="stopService()" :disabled="installed!=='install'">停止容器运行</el-button>
     </div>
     </div>
   </template>
   
   <script>
   export default {
+    props: ['installed'],
     data() {
       return {
         services: [],
@@ -58,8 +64,12 @@
       };
     },
     methods: {
+      stopService(){
+        console.log(this.installed)
+        
+      },
       async getServiceList() {
-        const response = await fetch("/serv/get_service_list");
+        const response = await fetch("/api/get_service_list");
         const data = await response.json();
         // const data = ["face_detection","face_alignment","car_detection","helmet_detection","ixpe_preprocess","ixpe_sr_and_pc","ixpe_edge_observe"]
         this.services = data;
@@ -67,28 +77,8 @@
       },
       async sendRequest(service) {
         try {
-          const response = await fetch(`/serv/get_execute_url/${service}`);
+          const response = await fetch(`/api/get_execute_url/${service}`);
           const data = await response.json();
-            // const data = {
-            //     "114.212.81.11:5500": {
-            //         "bandwidth": 1,
-            //         "cpu": 1,
-            //         "mem": 1,
-            //         "url": "http://114.212.81.11:5500/execute_task/face_detection"
-            //     },
-            //     "172.27.138.183:5501": {
-            //         "bandwidth": 1,
-            //         "cpu": 1,
-            //         "mem": 1,
-            //         "url": "http://172.27.138.183:5501/execute_task/face_detection"
-            //     },
-            //     "172.27.151.135:5501": {
-            //         "bandwidth": 1,
-            //         "cpu": 1,
-            //         "mem": 1,
-            //         "url": "http://172.27.151.135:5501/execute_task/face_detection"
-            //     }
-            // }
 
           this.urlData = data;
           // 请求成功，处理返回的数据
@@ -110,7 +100,7 @@
     },
     mounted() {
       this.getServiceList();
-      setInterval(this.getServiceList, 20000);
+      // setInterval(this.getServiceList, 20000);
     },
   };
   </script>
