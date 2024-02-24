@@ -25,6 +25,109 @@ def install_state():
     # 这里可以根据需要生成内容
     content = {'state':'uninstall'}
     return jsonify(content), 200
+@app.route('/node/get_video_info', methods=['GET'])
+def get_video_info():
+    # 这里可以根据需要生成内容
+    content = [
+        {
+            "source_label": "car",
+            "source_name": "交通监控摄像头",
+            "source_type": "视频流",
+            "camera_list":[
+                {
+                    "name": "摄像头1",
+                    "url": "rtsp/114.212.81.11...",
+                    "describe":"某十字路口",
+                    "resolution": "1080p",
+                    "fps":"25fps"
+                },
+                {
+                    "name": "摄像头2",
+                    "url": "rtsp/114.212.81.11...",
+                    "describe":"某十字路口2",
+                    "resolution": "1080p",
+                    "fps":"15fps"
+                }
+            ]
+        },
+        {
+            "source_label": "imu",
+            "source_name": "交通监控摄像头",
+            "source_type": "视频流",
+            "camera_list":[
+                {
+                    "name": "摄像头1",
+                    "url": "rtsp/114.212.81.11...",
+                    "describe":"某十字路口",
+                    "resolution": "1080p",
+                    "fps":"25fps"
+
+                },
+                {
+                    "name": "摄像头2",
+                    "url": "rtsp/114.212.81.11...",
+                    "describe":"某十字路口2",
+                    "resolution": "1080p",
+                    "fps":"15fps"
+                }
+            ]
+
+
+        },
+        {
+            "source_label": "car",
+            "source_name": "交通监控摄像头",
+            "source_type": "视频流",
+            "camera_list":[
+                {
+                    "name": "摄像头1",
+                    "url": "rtsp/114.212.81.11...",
+                    "describe":"某十字路口",
+                    "resolution": "1080p",
+                    "fps":"25fps"
+                },
+                {
+                    "name": "摄像头2",
+                    "url": "rtsp/114.212.81.11...",
+                    "describe":"某十字路口2",
+                    "resolution": "1080p",
+                    "fps":"15fps"
+                }
+            ]
+        },
+        {
+            "source_label": "imu",
+            "source_name": "交通监控摄像头",
+            "source_type": "视频流",
+            "camera_list":[
+                {
+                    "name": "摄像头1",
+                    "url": "rtsp/114.212.81.11...",
+                    "describe":"某十字路口",
+                    "resolution": "1080p",
+                    "fps":"25fps"
+
+                },
+                {
+                    "name": "摄像头2",
+                    "url": "rtsp/114.212.81.11...",
+                    "describe":"某十字路口2",
+                    "resolution": "1080p",
+                    "fps":"15fps"
+                }
+            ]
+
+
+        }
+
+    ]
+    return jsonify(content), 200
+
+@app.route('/query_state', methods=['GET'])
+def query_state():
+    # 这里可以根据需要生成内容
+    content = {'state':'open','source_label':'car'}
+    return jsonify(content), 200
 
 
 @app.route('/get_execute_url/<service>', methods=['GET'])
@@ -74,6 +177,16 @@ def get_task_stage(task):
 
 @app.route('/install', methods=['POST'])
 def post_content():
+
+    # 这里可以根据用户输入进行处理
+    # 假设我们简单地将输入返回给用户
+    response = {
+        'state': 'fail',
+        'msg': '失败'
+    }
+    return jsonify(response), 200
+@app.route('/query/submit_query', methods=['POST'])
+def submit_query():
 
     # 这里可以根据用户输入进行处理
     # 假设我们简单地将输入返回给用户
