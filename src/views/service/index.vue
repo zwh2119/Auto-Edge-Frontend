@@ -8,7 +8,7 @@
 					<div style="height: 100%" >
                         <div class="flex-margin flex w100">
                             <div class="flex-auto">
-                                <SvcInstall :detectionOptions="detectionOptions" :installed="installed"/>
+                                <SvcInstall/>
                             </div>
 					    </div>
                     </div>
@@ -19,7 +19,7 @@
 					<div style="height: 100%" >
                         <div class="flex-margin flex w100">
                             <div class="flex-auto">
-                                <SvcQuery :installed="installed"/> 
+                                <SvcQuery/> 
                             </div>
 					    </div>
                     </div>
@@ -47,35 +47,6 @@ export default {
 			detectionOptions:[],
 		}
 	},
-	async mounted(){
-      // 1. 获取可用服务
-			try {
-				const response = await axios.get('/api/task');
-				this.detectionOptions = response.data.map((item) => {
-					const key = Object.keys(item)[0];
-					const value = item[key];
-					return { chineseLabel: value, englishLabel: key };
-				});
-			} catch (error) {
-				console.error('Failed to fetch detection options', error);
-				this.detectionOptions = [
-					{ chineseLabel: '路面监控', englishLabel: 'road-detection' },
-					{ chineseLabel: '音频分类', englishLabel: 'audio' },
-					// { chineseLabel: '惯性轨迹感知', englishLabel: 'imu' },
-					// { chineseLabel: '工业视觉纠偏', englishLabel: 'edge-eye' },
-				];
-        console.log(this.detectionOptions);
-      }
-      // 服务是否已安装
-      try{
-        const response = await axios.get('/api/install_state');
-        this.installed = response.data['state'];
-        console.log(this.installed);
-      }catch(error){
-        console.log("query state error");
-      }
-      
-    },
 }
 
 </script>

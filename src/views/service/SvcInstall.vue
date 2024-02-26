@@ -6,12 +6,12 @@
             <h3>选择服务类型</h3>
           </div>
           <div>
-            <el-form label-width="100px">
+            <div>
               <!-- <el-form-item label="选择任务"> -->
                 <el-select v-model="selectedDetectionIndex" @change="handleChange" placeholder="请选择任务">
                   <el-option v-for="(option, index) in detectionOptions" :key="index" :label="option.chineseLabel" :value="index"></el-option>
                 </el-select>
-            </el-form>
+              </div>
           </div>
         </div>
         <br>
@@ -22,22 +22,23 @@
         <div>
           
           <div v-for="(stage, index) in selectedImages" :key="index" style="margin-top: 10px;">
-            <p>{{ stage.stage_name }}</p>
+            <p style="margin-bottom: 10px;">{{ stage.stage_name }}</p>
             <!-- <el-select v-model="stage.selected" placeholder="Select image"> -->
             <el-select v-model="stage.selected" @change="updateSelection(index,stage,stage.selected)" placeholder="Select image">
-              <el-option
-                v-for="item in stage.image_list"
-                :key="item.image_name"
-                :label="item.image_name"
-                :value="item.image_name + '-' + item.url"
-                
-              ></el-option>
+                <el-option
+                    v-for="item in stage.image_list"
+                    :key="item.image_name"
+                    :label="item.image_name"
+                    :value="item.image_name + '-' + item.url"
+                ></el-option>
             </el-select>
-            <p v-if="stage.selected"
-             style="margin-top: 10px; font-size: 14px;">{{ stage.selected.split('-')[1]  }}</p>
-          </div>
+            <p v-if="stage.selected" style="margin-top: 10px; font-size: 14px;">仓库url:{{ stage.selected.split('-')[1]  }}</p>
+            <el-divider v-if="index < selectedImages.length - 1"></el-divider>
+        </div>
+
         </div>
   
+        <!-- :loading="loading" :disabled="installed === 'install'" -->
         <div>
           <el-button type="primary" round native-type="submit" 
           :loading="loading" :disabled="installed === 'install'"
@@ -46,16 +47,18 @@
         </div>
       </form>
   </template>
-  
+
   <script>
   import { ElButton } from "element-plus";
   import { ElMessage } from "element-plus";
   import axios from 'axios';
+  import{useInstallStateStore} from '/@/stores/installState';
+  import {ref,watch,onMounted } from 'vue';
+  // const install_state = useInstallStateStore()
   export default {
     components: {
       ElButton,
     },
-    props: ['detectionOptions','installed'],
     data() {
       return {
         selectedImages: [],
@@ -65,25 +68,74 @@
         // detectionOptions:[],
         selectedUrls: {},
         successMessage: '',
-        // installed: null, // install:已安装, uninstall:未安装
+        // installed: install_state.status, // install:已安装, uninstall:未安装
         stageMessage:null,
         loading:false
       };
     },
-    
+    setup() {
+      const install_state = useInstallStateStore();
+      const installed = ref(null);
+      const detectionOptions = ref(null);
+
+      watch(() => install_state.status, (newValue, oldValue) => {
+        installed.value = newValue;
+        // console.log(installed.value);
+      });
+      onMounted(async () => {
+        // console.log("mount")
+        try {
+          const response = await axios.get('/api/task');
+          if (response.data !== null) {
+            // console.log(response.data)
+            detectionOptions.value = response.data.map((item) => {
+              const key = Object.keys(item)[0];
+              const value = item[key];
+              return { chineseLabel: value, englishLabel: key };
+            });
+          }
+        } catch (error) {
+          console.error('Failed to fetch detection options', error);
+          detectionOptions.value = [
+            { chineseLabel: '路面监控', englishLabel: 'road-detection' },
+            { chineseLabel: '音频分类', englishLabel: 'audio' },
+          ];
+          // console.log(this.detectionOptions);
+        }
+        
+        try {
+          const response = await axios.get('/api/install_state');
+          installed.value = response.data['state'];
+          if(installed.value === 'install'){
+            install_state.install();
+          }else{
+            install_state.uninstall();
+          }
+          // console.log(installed.value);
+        } catch (error) {
+          console.error("query state error");
+        }
+      });
+
+      return {
+        installed,
+        install_state,
+        detectionOptions
+      };
+    },
     methods: {
       updateSelection(index,stage,selected){
         this.imageList[index] = selected.split('-')[0];
-        console.log(this.installed)
+        // console.log(this.installed)
       },
       async handleChange() {
 			  this.successMessage = '';
+        this.selectedImages = [];
         try {
           const index = this.selectedDetectionIndex;
           if (index !== null && index >= 0 && index < this.detectionOptions.length) {
             const englishLabel = this.detectionOptions[index].englishLabel || '';
-            console.log(englishLabel);
-            // to get task stage
+            // console.log(englishLabel);
             const response = await axios.get(`/api/get_task_stage/${englishLabel}`);
             const data = response.data;
             this.stageMessage = data;
@@ -109,8 +161,8 @@
             return; // 提前结束方法
         }
 
-        console.log(taskName);
-        console.log(image_list);
+        // console.log(taskName);
+        // console.log(image_list);
         const content = {
           'task_name':taskName,
           'image_list':image_list
@@ -124,7 +176,11 @@
               const state = data.state;
               const msg = data.msg;
               this.loading = false;
+              
               if(state === 'success'){
+                this.install_state.install();
+                // this.installed = 'install';
+                // console.log(this.install_state.status);
                 ElMessage({
                   message: msg,
                   showClose: true,
@@ -143,8 +199,38 @@
             }).catch((error) => {
               this.loading = false;
               console.error(error);
-              ElMessage.error("网络故障,上传失败");
+              ElMessage.error("网络故障,上传失败",3000);
             });
+      }
+      
+    },
+    async mounted(){
+      // 1. 获取可用服务
+			try {
+				const response = await axios.get('/api/task');
+				if(response.data !== null){
+					this.detectionOptions = response.data.map((item) => {
+						const key = Object.keys(item)[0];
+						const value = item[key];
+						return { chineseLabel: value, englishLabel: key };
+						});
+				}
+				
+			} catch (error) {
+				console.error('Failed to fetch detection options', error);
+				this.detectionOptions = [
+					{ chineseLabel: '路面监控', englishLabel: 'road-detection' },
+					{ chineseLabel: '音频分类', englishLabel: 'audio' },
+				];
+        // console.log(this.detectionOptions);
+      }
+      // 服务是否已安装
+      try{
+        const response = await axios.get('/api/install_state');
+        this.installed = response.data['state'];
+        // console.log(this.installed);
+      }catch(error){
+        console.error("query state error");
       }
       
     },

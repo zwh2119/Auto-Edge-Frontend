@@ -6,12 +6,12 @@ app = Flask(__name__)
 @app.route('/task', methods=['GET'])
 def get_content():
     # 这里可以根据需要生成内容
-    content = {
-        "road-detection":"路面监控",
-        "audio":"音频分类",
-        "imu":"惯性轨迹感知",
-        "edge-eye":"工业视觉纠偏"
-    }
+    content = [
+        {"road-detection":"路面监控"},
+        {"audio":"音频分类"},
+        {"imu":"惯性轨迹感知"},
+        {"edge-eye":"工业视觉纠偏"}
+    ]
     return jsonify(content), 200
 
 @app.route('/get_service_list', methods=['GET'])
@@ -81,14 +81,14 @@ def get_video_info():
             "camera_list":[
                 {
                     "name": "摄像头1",
-                    "url": "rtsp/114.212.81.11...",
+                    "url": "rtsp/114.212.81.11/video1",
                     "describe":"某十字路口",
                     "resolution": "1080p",
                     "fps":"25fps"
                 },
                 {
                     "name": "摄像头2",
-                    "url": "rtsp/114.212.81.11...",
+                    "url": "rtsp/114.212.81.11/video1",
                     "describe":"某十字路口2",
                     "resolution": "1080p",
                     "fps":"15fps"
@@ -126,7 +126,7 @@ def get_video_info():
 @app.route('/query_state', methods=['GET'])
 def query_state():
     # 这里可以根据需要生成内容
-    content = {'state':'open','source_label':'car'}
+    content = {'state':'close','source_label':'car'}
     return jsonify(content), 200
 
 
@@ -181,8 +181,18 @@ def post_content():
     # 这里可以根据用户输入进行处理
     # 假设我们简单地将输入返回给用户
     response = {
-        'state': 'fail',
-        'msg': '失败'
+        'state': 'success',
+        'msg': '成功'
+    }
+    return jsonify(response), 200
+@app.route('/stop_query', methods=['POST'])
+def stop_query():
+
+    # 这里可以根据用户输入进行处理
+    # 假设我们简单地将输入返回给用户
+    response = {
+        'state': 'success',
+        'msg': '成功'
     }
     return jsonify(response), 200
 @app.route('/query/submit_query', methods=['POST'])
@@ -191,8 +201,8 @@ def submit_query():
     # 这里可以根据用户输入进行处理
     # 假设我们简单地将输入返回给用户
     response = {
-        'state': 'fail',
-        'msg': '失败'
+        'state': 'success',
+        'msg': '成功'
     }
     return jsonify(response), 200
 

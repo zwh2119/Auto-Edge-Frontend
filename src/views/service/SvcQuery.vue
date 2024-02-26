@@ -1,109 +1,107 @@
 <template>
-    <div class="outline">
-        <div>
-            <h3>已下装服务容器</h3>
-        </div>
-      <ul style="list-style-type: none" class="svc-container">
-        <li
-          v-for="(service, index) in services"
-          :key="index"
-          class="svc-item"
-        >
-          <el-radio
-            v-model="selected"
-            :label="service"
-            @change="sendRequest(service)"
-            >{{ service }}</el-radio>
-          <!-- <el-divider /> -->
-        </li>
-      </ul>
-      <br>
-      <div>
-            <h3>当前服务详情</h3>
-      </div>
+  <div class="outline">
+    <div>
+      <h3>已安装服务容器</h3>
+    </div>
+    <ul style="list-style-type: none" class="svc-container">
+      <li v-for="(service, index) in services" :key="index" class="svc-item">
+        <el-radio v-model="selected" :label="service" @change="sendRequest(service)">
+          {{ service }}
+        </el-radio>
+      </li>
+    </ul>
+    <br>
+    <div>
+      <h3>当前服务详情</h3>
+    </div>
 
-      <div class="table-container">
-        <table>
+    <div class="table-container">
+      <table>
         <thead>
-            <tr>
+          <tr>
             <th>ip地址</th>
             <th>主机名</th>
             <th>CPU使用率</th>
             <th>内存使用率</th>
             <th>带宽</th>
             <th>存活时间</th>
-            </tr>
+          </tr>
         </thead>
         <tbody>
-            <tr v-for="item in urlData" class="outer-li">
-              <td>{{ item.ip }}</td>
-              <td>{{ item.hostname }}</td>
-              <td>{{ item.cpu }}</td>
-              <td>{{ item.memory }}</td>
-              <td>{{ item.bandwidth }}</td>
-              <td>{{ item.age }}</td>
-            </tr>
+          <tr v-for="item in urlData" class="outer-li">
+            <td>{{ item.ip }}</td>
+            <td>{{ item.hostname }}</td>
+            <td>{{ item.cpu }}</td>
+            <td>{{ item.memory }}</td>
+            <td>{{ item.bandwidth }}</td>
+            <td>{{ item.age }}</td>
+          </tr>
         </tbody>
-        </table>
+      </table>
     </div>
     <div style="text-align: right; margin-top: 20px;">
-      <el-button type="danger" @click="stopService()" :disabled="installed!=='install'">停止容器运行</el-button>
+      <el-button type="danger" @click="stopService" :disabled="installed !== 'install'">停止容器运行</el-button>
     </div>
-    </div>
-  </template>
-  
-  <script>
-  export default {
-    props: ['installed'],
-    data() {
-      return {
-        services: [],
-        urlData: null,
-        execResult: null,
-        selected: null,
-      };
-    },
-    methods: {
-      stopService(){
-        console.log(this.installed)
-        
-      },
-      async getServiceList() {
+  </div>
+</template>
+
+<script>
+import { useInstallStateStore } from '/@/stores/installState';
+import { ref, watch } from 'vue';
+
+export default {
+  data() {
+    return {
+      services: [],
+      urlData: null,
+      selected: null,
+    };
+  },
+  setup() {
+    const install_state = useInstallStateStore();
+    const installed = ref(null);
+
+    watch(() => install_state.status, (newValue, oldValue) => {
+      installed.value = newValue;
+      console.log(installed.value);
+    });
+
+    return {
+      installed,
+      stopService: () => {
+        install_state.uninstall();
+        console.log(install_state.status);
+      }
+    };
+  },
+  methods: {
+    async getServiceList() {
+      try {
         const response = await fetch("/api/get_service_list");
         const data = await response.json();
-        // const data = ["face_detection","face_alignment","car_detection","helmet_detection","ixpe_preprocess","ixpe_sr_and_pc","ixpe_edge_observe"]
         this.services = data;
-        // console.log(this.services);
-      },
-      async sendRequest(service) {
-        try {
-          const response = await fetch(`/api/get_execute_url/${service}`);
-          const data = await response.json();
+      } catch (error) {
+        console.error("请求失败:", error);
+        alert("请求失败，请稍后再试");
+      }
+    },
+    async sendRequest(service) {
+      try {
+        const response = await fetch(`/api/get_execute_url/${service}`);
+        const data = await response.json();
+        this.urlData = data;
+      } catch (error) {
+        console.error("请求失败:", error);
+        alert("请求失败，请稍后再试");
+      }
+    }
+  },
+  mounted() {
+    this.getServiceList();
+  },
+};
+</script>
 
-          this.urlData = data;
-          // 请求成功，处理返回的数据
-        } catch (error) {
-          // 请求失败，进行提示
-          console.error("请求失败:", error);
-          // 进行提示操作，比如弹出一个错误提示框
-          alert("请求失败，请稍后再试");
-        }
-      },
-      async executeTaskResult() {
-        const response = await fetch(
-          // "http://127.0.0.1:5500/execute_task/face_detection"
-          "/serv/execute_task/face_detection"
-        );
-        const data = response.json();
-        this.execResult = data;
-      },
-    },
-    mounted() {
-      this.getServiceList();
-      // setInterval(this.getServiceList, 20000);
-    },
-  };
-  </script>
   <style scoped>
   body {
     font-family: Arial, sans-serif;

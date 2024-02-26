@@ -8,22 +8,8 @@
             <!-- todo:点击后填充post请求 -->
 
            <!-- 显示视频流 -->
-<!-- 
-            <div v-for="(value, node_addr) in info" style="display: inline-block; margin-right: 10px;">
-                <div class="available-node"
-                  v-for="(v, video_id) in value" 
-                  v-on:click="selectItem({ key: node_addr + '-' + video_id })"
-                  v-bind:class="{ 'selected': selected === node_addr + '-' + video_id }"
-                  >
-                  <ul style="list-style-type: none;">
-                    <li class="subli">Addr: {{ node_addr }}</li>
-                    <li class="subli">VideoID: {{ video_id }}</li>
-                    <li class="subli">Description: {{ v.type }}</li>
-                  </ul>
-                </div>
-              </div> -->
               <div style="display: flex;height: 300px;overflow-y: scroll;">
-                <div v-for="item in info" style="display: inline-block; margin-right: 10px;">
+                <div v-for="item in info" style="display: inline-block;">
                   <div class="available-node"
                     v-on:click="selectItem({ key:item })"
                     v-bind:class="{ 'selected': selected_label === item.source_label }"
@@ -32,35 +18,16 @@
                     <li class="info-li">数据流类型: {{ item.source_type }}</li>
                     <li class="info-li">数据流名称: {{ item.source_name }}</li>
                     <li class="info-li">数据流列表: </li>
-                    <div class="info-li" v-for="camera in item.camera_list" style="display: flex;">
-                      <p style="visibility: hidden;">数据流列表:</p>
-                      <!-- <div>{{ camera.name }}</div> -->
-                      <el-tooltip
-                          class="box-item"
-                          effect="dark"
-                          placement="right"
-                          hide-after="10"
-                          popper-class="tooltip-width"
-                        >
-                        <template #content>
-                          推流地址:{{ camera.url }}<br/>
-                          简要描述:{{ camera.describe }}<br/>
-                          分辨率:{{ camera.resolution }}<br/>
-                          帧率:{{ camera.fps }}<br/>
-                        </template>
-                          <el-button
-                            type=""
-                            text
-                            >{{ camera.name }}</el-button
-                          >
-                        </el-tooltip>
-                    </div>
-                    <!-- <li v-for="camera in item.camera_list" style="margin-top: 10px;">
+                    <div class="info-li" v-for="camera in item.camera_list" style="display: flex;justify-content: center;">
+                      <div style="width: 100%; display: flex; align-items: center;">
+                        <!-- <p style="visibility: hidden;">数据流列表:</p> -->
+                        <div style="margin-right: 10px;">{{ camera.name }}</div>
+                        <!-- <el-button :plain="true"  @click.stop="handleDetailClick(camera)">查看详情</el-button> -->
                         <el-tooltip
                           class="box-item"
                           effect="dark"
                           placement="right"
-                          hide-after="10"
+                          :hide-after="10"
                           popper-class="tooltip-width"
                         >
                         <template #content>
@@ -72,10 +39,12 @@
                           <el-button
                             type=""
                             text
-                            >{{ camera.name }}</el-button
+                            >查看详情</el-button
                           >
                         </el-tooltip>
-                    </li> -->
+                      </div>
+                    </div>
+
                   </ul>
                 </div>
                 </div>
@@ -122,10 +91,9 @@
           
           <!-- 提交任务 -->
         <div style="display: flex; justify-content: center;margin-top: 20px;">
-          <el-button type="primary" plain @click="submitTask" :loading="loading" :disabled="state!==open">开启数据流</el-button>
-          <el-button type="danger" @click="stop_query" :disabled="state===open" :loading="kill_loading">关闭数据流</el-button>
+          <el-button type="primary" :disabled="state==='open'" :loading="loading" @click="submitTask">开启数据流</el-button>
+          <el-button type="danger" :disabled="state!=='open'" :loading="kill_loading" @click="stop_query" >关闭数据流</el-button>
         </div>
-        
 
         </el-card>
       </div>
@@ -146,7 +114,7 @@ data() {
         loading:false,
 
         // 视频流信息
-        info: "",
+        info: null,
         
         // 已选择的视频流相关
         // selected:null,
@@ -160,14 +128,18 @@ data() {
         };
     },
     methods: {
-
+        handleDetailClick(item){
+          let msg = "";
+          for(var k in item){
+            msg += k + ":" + item[k] + '\n';
+          }
+          alert(msg)
+        },
         // 获取视频流信息
         getInfo() {
-          // console.log("getInfo!!");
           fetch("/api/node/get_video_info")
             .then((response) => response.json())
             .then((data) => {
-              // console.log(data);
               this.info = data;
             })
             .catch((error) => {
@@ -185,13 +157,22 @@ data() {
 
         // 提交任务
         submitTask(){
-          this.loading = true;
-          const urgencyValue = parseFloat(this.urgency);
-          const importanceValue = parseFloat(this.importance);
-          if(urgencyValue + importanceValue !== 1){
-            ElMessage.error('紧急程度+重要程度需要等于1')
+          // 检查所有字段是否都已填写
+          if (!this.selected_label || !this.delay_constraint || !this.acc_constraint || !this.urgency || !this.importance) {
+            ElMessage.error('请选择数据流并且填写所有字段');
             return;
           }
+          // 检查紧急程度和重要程度之和是否等于1
+          const urgencyValue = parseFloat(this.urgency);
+          const importanceValue = parseFloat(this.importance);
+          if (isNaN(urgencyValue) || isNaN(importanceValue) || urgencyValue + importanceValue !== 1) {
+            ElMessage.error('紧急程度 + 重要程度需要等于1');
+            return;
+          }
+
+          this.loading = true;
+          
+          
           fetch('/api/query/submit_query',{
             method: 'POST',
             body: {
@@ -207,6 +188,7 @@ data() {
             const msg = data.msg;
             this.loading = false;
             if(state === 'success'){
+              this.state = 'open';
                 ElMessage({
                   message: msg,
                   showClose: true,
@@ -249,6 +231,7 @@ data() {
               const msg = data.msg;
               if(state === 'success'){
                 this.kill_loading = false;
+                this.state = 'close'
                 ElMessage({
                   message: msg,
                   showClose: true,
@@ -267,7 +250,7 @@ data() {
             }).catch(error =>{
               this.kill_loading = false;
               // console.log('submit task fail');
-              ElMessage.error("网络故障,上传失败");
+              ElMessage.error("网络故障,上传失败,",error);
             })
         }
   },
@@ -276,52 +259,52 @@ data() {
       this.query_state();
       this.getInfo();
       // 静态填充
-        this.info = [
-        {
-            "source_label": "car",
-            "source_name": "交通监控摄像头",
-            "source_type": "视频流",
-            "camera_list":[
-                {
-                    "name": "摄像头1",
-                    "url": "rtsp/114.212.81.11...",
-                    "describe":"某十字路口",
-                    "resolution": "1080p",
-                    "fps":"25fps"
-                },
-                {
-                    "name": "摄像头2",
-                    "url": "rtsp/114.212.81.11...",
-                    "describe":"某十字路口2",
-                    "resolution": "1080p",
-                    "fps":"15fps"
-                }
-            ]
-        },
-        {
-            "source_label": "imu",
-            "source_name": "交通监控摄像头",
-            "source_type": "视频流",
-            "camera_list":[
-                {
-                    "name": "摄像头1",
-                    "url": "rtsp/114.212.81.11...",
-                    "describe":"某十字路口",
-                    "resolution": "1080p",
-                    "fps":"25fps"
+    //     this.info = [
+    //     {
+    //         "source_label": "car",
+    //         "source_name": "交通监控摄像头",
+    //         "source_type": "视频流",
+    //         "camera_list":[
+    //             {
+    //                 "name": "摄像头1",
+    //                 "url": "rtsp/114.212.81.11...",
+    //                 "describe":"某十字路口",
+    //                 "resolution": "1080p",
+    //                 "fps":"25fps"
+    //             },
+    //             {
+    //                 "name": "摄像头2",
+    //                 "url": "rtsp/114.212.81.11...",
+    //                 "describe":"某十字路口2",
+    //                 "resolution": "1080p",
+    //                 "fps":"15fps"
+    //             }
+    //         ]
+    //     },
+    //     {
+    //         "source_label": "imu",
+    //         "source_name": "交通监控摄像头",
+    //         "source_type": "视频流",
+    //         "camera_list":[
+    //             {
+    //                 "name": "摄像头1",
+    //                 "url": "rtsp/114.212.81.11...",
+    //                 "describe":"某十字路口",
+    //                 "resolution": "1080p",
+    //                 "fps":"25fps"
 
-                },
-                {
-                    "name": "摄像头2",
-                    "url": "rtsp/114.212.81.11...",
-                    "describe":"某十字路口2",
-                    "resolution": "1080p",
-                    "fps":"15fps"
-                }
-            ]
-        }
+    //             },
+    //             {
+    //                 "name": "摄像头2",
+    //                 "url": "rtsp/114.212.81.11...",
+    //                 "describe":"某十字路口2",
+    //                 "resolution": "1080p",
+    //                 "fps":"15fps"
+    //             }
+    //         ]
+    //     }
 
-    ];
+    // ];
     console.log(this.info)
             
     },
@@ -342,7 +325,7 @@ margin-top: 20px;
   display: inline-block;
   margin: 20px;
   /* background-color: cadetblue; */
-  width: 300px;
+  width: max-content;
   border: 1px solid #5c5858;
   border-radius: 10px;
   height: 220px;
@@ -350,6 +333,7 @@ margin-top: 20px;
 .info-li{
   margin-top: 10px;
   margin-left: 10px;
+  margin-right: 10px;
 }
 
 
