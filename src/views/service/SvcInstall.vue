@@ -29,11 +29,12 @@
                     v-for="item in stage.image_list"
                     :key="item.image_name"
                     :label="item.image_name"
-                    :value="item.image_name + '-' + item.url"
+                    :value="item.image_name + '&' + item.url"
                 ></el-option>
             </el-select>
-            <p v-if="stage.selected" style="margin-top: 10px; font-size: 14px;">仓库url:{{ stage.selected.split('-')[1]  }}</p>
+            <p v-if="stage.selected" style="margin-top: 10px; font-size: 14px;">仓库url:{{ stage.selected.split('&')[1]  }}</p>
             <el-divider v-if="index < selectedImages.length - 1"></el-divider>
+            <!-- {{ stage.selected }} -->
         </div>
 
         </div>
@@ -51,6 +52,7 @@
   <script>
   import { ElButton } from "element-plus";
   import { ElMessage } from "element-plus";
+
   import axios from 'axios';
   import{useInstallStateStore} from '/@/stores/installState';
   import {ref,watch,onMounted } from 'vue';
@@ -63,7 +65,6 @@
       return {
         selectedImages: [],
         imageList:[],
-        loading: false,
         selectedDetectionIndex:null,
         // detectionOptions:[],
         selectedUrls: {},
@@ -125,7 +126,7 @@
     },
     methods: {
       updateSelection(index,stage,selected){
-        this.imageList[index] = selected.split('-')[0];
+        this.imageList[index] = selected.split('&')[0];
         // console.log(this.installed)
       },
       async handleChange() {
@@ -167,20 +168,23 @@
           'task_name':taskName,
           'image_list':image_list
         }
+        let task_info = JSON.stringify(content);
+        
+        // console.log(JSON.stringify(content));
         this.loading = true;
         fetch('/api/install',{
           method: "POST",
-          body:content
+          body:task_info
         }).then((response) => response.json())
           .then((data) => {
               const state = data.state;
               const msg = data.msg;
               this.loading = false;
-              
               if(state === 'success'){
                 this.install_state.install();
                 // this.installed = 'install';
                 // console.log(this.install_state.status);
+                location.reload();  
                 ElMessage({
                   message: msg,
                   showClose: true,
@@ -195,10 +199,10 @@
                   duration: 3000,
                 });
               }
-              // location.reload();
+              
             }).catch((error) => {
               this.loading = false;
-              console.error(error);
+              // console.error(error);
               ElMessage.error("网络故障,上传失败",3000);
             });
       }
@@ -264,19 +268,6 @@
     margin-bottom: 20px;
   }
 
-  input[type="text"],
-  input[type="file"] {
-    width: calc(100% - 20px);
-    padding: 10px;
-    margin-bottom: 10px;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    font-size: 16px;
-  }
-
-  input[type="file"] {
-    cursor: pointer;
-  }
 
   .el-button {
     font-size: 16px;

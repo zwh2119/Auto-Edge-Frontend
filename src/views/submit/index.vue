@@ -3,12 +3,13 @@
       <div class="content">
         
         <!-- 选择视频流 -->
+        <!-- <el-card shadow="hover" style="margin: 20px;display: flex;justify-content: center;"> -->
         <el-card shadow="hover" style="margin: 20px;">
           <div slot="header" style="font-size: 20px;font-weight: bold;">选择视频流</div>
             <!-- todo:点击后填充post请求 -->
 
            <!-- 显示视频流 -->
-              <div style="display: flex;height: 300px;overflow-y: scroll;">
+              <div style="display: flex;height: 300px;overflow-y: scroll;justify-content: center;">
                 <div v-for="item in info" style="display: inline-block;">
                   <div class="available-node"
                     v-on:click="selectItem({ key:item })"
@@ -33,8 +34,8 @@
                         <template #content>
                           推流地址:{{ camera.url }}<br/>
                           简要描述:{{ camera.describe }}<br/>
-                          分辨率:{{ camera.resolution }}<br/>
-                          帧率:{{ camera.fps }}<br/>
+                          <div v-if="camera.resolution">分辨率:{{ camera.resolution }}</div>
+                          <div v-if="camera.fps">帧率:{{ camera.fps }}</div>
                         </template>
                           <el-button
                             type=""
@@ -106,10 +107,10 @@ export default {
 data() {
     return {
         
-        delay_constraint:null,
-        acc_constraint:null,
-        urgency:null,
-        importance:null,
+        delay_constraint:0.8,
+        acc_constraint:0.6,
+        urgency:0.6,
+        importance:0.4,
 
         loading:false,
 
@@ -172,16 +173,17 @@ data() {
 
           this.loading = true;
           
-          
-          fetch('/api/query/submit_query',{
-            method: 'POST',
-            body: {
+          const content = {
               'source_label':this.selected_label,
               'delay_cons':this.delay_constraint,
               'acc_cons':this.acc_constraint,
               'urgency':this.urgency,
               'importance':this.importance
             }
+            const task_info = JSON.stringify(content);
+          fetch('/api/query/submit_query',{
+            method: 'POST',
+            body: task_info
           }).then((response)=> response.json())
           .then(data=>{
             const state = data.state;
@@ -216,15 +218,21 @@ data() {
               this.state = data.state;
               console.log(this.state);
               this.source_label = data.source_label;
+          
+              this.selected_label = this.source_label;
+              console.log(this.selected_label)
             })
         },
         stop_query(){
           this.kill_loading = true;
-          fetch('/api/stop_query',{
-            method:'POST',
-            body:{
+          const content = {
               'source_label':this.source_label
             }
+          const task_info = JSON.stringify(content)
+          console.log(task_info)
+          fetch('/api/stop_query',{
+            method:'POST',
+            body:task_info
           }).then((response) => response.json())
             .then(data =>{
               const state = data.state;
@@ -232,6 +240,7 @@ data() {
               if(state === 'success'){
                 this.kill_loading = false;
                 this.state = 'close'
+                this.selected_label = null;
                 ElMessage({
                   message: msg,
                   showClose: true,

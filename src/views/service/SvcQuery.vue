@@ -24,7 +24,7 @@
             <th>CPU使用率</th>
             <th>内存使用率</th>
             <th>带宽</th>
-            <th>存活时间</th>
+            <th>创建时间</th>
           </tr>
         </thead>
         <tbody>
@@ -40,13 +40,14 @@
       </table>
     </div>
     <div style="text-align: right; margin-top: 20px;">
-      <el-button type="danger" @click="stopService" :disabled="installed !== 'install'">停止容器运行</el-button>
+      <el-button type="danger" @click="stopService" :loading="loading" :disabled="installed !== 'install'">停止容器运行</el-button>
     </div>
   </div>
 </template>
 
 <script>
 import { useInstallStateStore } from '/@/stores/installState';
+import { ElMessage } from "element-plus";
 import { ref, watch } from 'vue';
 
 export default {
@@ -60,17 +61,53 @@ export default {
   setup() {
     const install_state = useInstallStateStore();
     const installed = ref(null);
-
+    // installed.value = true;
     watch(() => install_state.status, (newValue, oldValue) => {
       installed.value = newValue;
       console.log(installed.value);
     });
-
+    const loading = ref(null)
     return {
       installed,
+      loading,
       stopService: () => {
-        install_state.uninstall();
-        console.log(install_state.status);
+        loading.value = true
+        fetch('/api/stop_service',{
+          method:'POST'
+        }).then(response => response.json())
+        .then(data => {
+          const state = data.state;
+          const msg = data.msg;
+          console.log(state)
+          console.log(msg)
+
+          loading.value = false;
+          // this.getServiceList();
+          if(state === 'success'){
+            install_state.uninstall();
+            // this.installed = 'install';
+            // console.log(this.install_state.status);
+            location.reload();  
+            ElMessage({
+              message: msg,
+              showClose: true,
+              type: "success",
+              duration: 3000,
+            });
+          }else{
+            ElMessage({
+              message: msg,
+              showClose: true,
+              type: "error",
+              duration: 3000,
+            });
+          }
+        }).catch((error) => {
+          loading.value = false;
+          console.error(error);
+          ElMessage.error("网络故障,上传失败",3000);
+        });
+        // console.log(install_state.status);
       }
     };
   },
@@ -81,8 +118,8 @@ export default {
         const data = await response.json();
         this.services = data;
       } catch (error) {
-        console.error("请求失败:", error);
-        alert("请求失败，请稍后再试");
+        // console.error("请求失败:", error);
+        ElMessage.error("请求失败，请稍后再试");
       }
     },
     async sendRequest(service) {
@@ -91,8 +128,8 @@ export default {
         const data = await response.json();
         this.urlData = data;
       } catch (error) {
-        console.error("请求失败:", error);
-        alert("请求失败，请稍后再试");
+        // console.error("请求失败:", error);
+        ElMessage.error("请求失败，请联系管理员");
       }
     }
   },
