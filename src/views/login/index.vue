@@ -3,10 +3,10 @@
 		<div class="login-left">
 			<div class="login-left-logo">
 				<img :src="logoMini" />
-				<div class="login-left-logo-text">
+				<!-- <div class="login-left-logo-text">
 					<span>{{ getThemeConfig.globalViceTitle }}</span>
 					<span class="login-left-logo-text-msg">{{ getThemeConfig.globalViceTitleMsg }}</span>
-				</div>
+				</div> -->
 			</div>
 			<div class="login-left-img">
 				<img :src="loginMain" />
@@ -48,7 +48,7 @@ import { storeToRefs } from 'pinia';
 import { useThemeConfig } from '/@/stores/themeConfig';
 import { NextLoading } from '/@/utils/loading';
 import logoMini from '/@/assets/logo-mini.svg';
-import loginMain from '/@/assets/login-main.svg';
+import loginMain from '/@/assets/logo.svg';
 import loginBg from '/@/assets/login-bg.svg';
 
 // 引入组件

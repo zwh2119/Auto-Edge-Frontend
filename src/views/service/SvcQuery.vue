@@ -77,7 +77,8 @@ export default {
         }).then(response => response.json())
         .then(data => {
           const state = data.state;
-          const msg = data.msg;
+          let msg = data.msg;
+          
           console.log(state)
           console.log(msg)
 
@@ -87,13 +88,16 @@ export default {
             install_state.uninstall();
             // this.installed = 'install';
             // console.log(this.install_state.status);
-            location.reload();  
+            msg += ",即将刷新页面"
             ElMessage({
               message: msg,
               showClose: true,
               type: "success",
               duration: 3000,
             });
+            setTimeout(() => {
+              location.reload();
+            }, 3000);  
           }else{
             ElMessage({
               message: msg,

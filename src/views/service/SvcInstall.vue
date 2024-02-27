@@ -8,7 +8,7 @@
           <div>
             <div>
               <!-- <el-form-item label="选择任务"> -->
-                <el-select v-model="selectedDetectionIndex" @change="handleChange" placeholder="请选择任务">
+                <el-select style="width: 300px;" v-model="selectedDetectionIndex" @change="handleChange" placeholder="请选择任务">
                   <el-option v-for="(option, index) in detectionOptions" :key="index" :label="option.chineseLabel" :value="index"></el-option>
                 </el-select>
               </div>
@@ -24,7 +24,7 @@
           <div v-for="(stage, index) in selectedImages" :key="index" style="margin-top: 10px;">
             <p style="margin-bottom: 10px;">{{ stage.stage_name }}</p>
             <!-- <el-select v-model="stage.selected" placeholder="Select image"> -->
-            <el-select v-model="stage.selected" @change="updateSelection(index,stage,stage.selected)" placeholder="Select image">
+            <el-select style="width: 300px;" v-model="stage.selected" @change="updateSelection(index,stage,stage.selected)" placeholder="选择镜像">
                 <el-option
                     v-for="item in stage.image_list"
                     :key="item.image_name"
@@ -132,6 +132,7 @@
       async handleChange() {
 			  this.successMessage = '';
         this.selectedImages = [];
+        this.imageList = [];
         try {
           const index = this.selectedDetectionIndex;
           if (index !== null && index >= 0 && index < this.detectionOptions.length) {
@@ -140,6 +141,7 @@
             const response = await axios.get(`/api/get_task_stage/${englishLabel}`);
             const data = response.data;
             this.stageMessage = data;
+            // console.log(data.length)
             for(var i = 0;i < data.length;i ++){
               this.selectedImages.push(data[i]);
               // console.log(data[i])
@@ -157,6 +159,7 @@
       if (index !== null && index >= 0 && index < this.detectionOptions.length) {
         const taskName = this.detectionOptions[index].englishLabel || '';
         const image_list = Object.values(this.imageList);
+        console.log(image_list)
         if (image_list.includes('')) {
             ElMessage.error('请为所有阶段选择镜像');
             return; // 提前结束方法
@@ -178,19 +181,22 @@
         }).then((response) => response.json())
           .then((data) => {
               const state = data.state;
-              const msg = data.msg;
+              let msg = data.msg;
               this.loading = false;
               if(state === 'success'){
                 this.install_state.install();
                 // this.installed = 'install';
                 // console.log(this.install_state.status);
-                location.reload();  
+                msg += ",即将刷新页面"
                 ElMessage({
                   message: msg,
                   showClose: true,
                   type: "success",
                   duration: 3000,
                 });
+                setTimeout(() => {
+                  location.reload();  
+                }, 3000);
               }else{
                 ElMessage({
                   message: msg,
