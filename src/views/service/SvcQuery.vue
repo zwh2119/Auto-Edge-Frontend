@@ -12,7 +12,7 @@
     </ul>
     <br>
     <div>
-      <h3>当前服务详情</h3>
+      <h3>当前服务详情<span style="visibility: hidden;">间隔</span> <el-button @click="refresh()">刷新</el-button></h3>
     </div>
 
     <div class="table-container">
@@ -49,13 +49,13 @@
 import { useInstallStateStore } from '/@/stores/installState';
 import { ElMessage } from "element-plus";
 import { ref, watch } from 'vue';
-
 export default {
   data() {
     return {
       services: [],
       urlData: null,
       selected: null,
+      selected_service:null
     };
   },
   setup() {
@@ -126,8 +126,13 @@ export default {
         ElMessage.error("请求失败，请稍后再试");
       }
     },
+    refresh(){
+      console.log(this.selected_service)
+      this.sendRequest(this.selected_service)
+    },
     async sendRequest(service) {
       try {
+        this.selected_service = service
         const response = await fetch(`/api/get_execute_url/${service}`);
         const data = await response.json();
         this.urlData = data;
@@ -202,7 +207,7 @@ export default {
   th, td {
     border: 1px solid #f2f2f2;
     padding: 10px;
-    text-align: left;
+    text-align: center;
   }
 
   th {
