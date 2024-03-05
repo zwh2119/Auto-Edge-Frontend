@@ -6,7 +6,9 @@ export default {
 		install:'服务安装',
 		info: '系统详情',
 		result: '结果查看',
-		submit:'提交任务'
+		submit:'提交任务',
+		priority:'优先级队列',
+		modal:'结果展示'
 	},
 	staticRoutes: {
 		signIn: '登录',
