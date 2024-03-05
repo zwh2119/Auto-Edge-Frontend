@@ -15,9 +15,9 @@
             <br>
             <div class="input-container">
                 <label for="free-task-duration">任务持续时间(s): </label>
-                <input v-if="localFreeTaskState === 0" type="text" v-model="localFreeTaskDuration" :disabled="disabled"
+                <input v-if="localFreeTaskState === 0" type="text" v-model="localFreeTaskDuration" :disabled="disabled" :style="{ 'width': '30px' }"
                     placeholder="请输入任务持续时间" />
-                <input v-else-if="localFreeTaskState === 1 || localFreeTaskState === 2" type="text" :disabled="disabled"
+                <input v-else-if="localFreeTaskState === 1 || localFreeTaskState === 2" type="text" :disabled="disabled" :style="{ 'width': '30px' }"
                     :value="localFreeTaskDuration" disabled />
             </div>
             <br><br><br>
@@ -105,9 +105,14 @@ export default {
         submitFreeTask() {
             console.log('submit free task');
 
-            // TODO：校验输入的任务持续时间是否合法，必须是数字，不能小于0秒，不能大于60秒，否则弹出框
-            if (this.localFreeTaskDuration === '' || isNaN(this.localFreeTaskDuration) || this.localFreeTaskDuration > 60 || this.localFreeTaskDuration < 0) {
-                alert('请输入合法的任务持续时间(0-60s)');
+            // TODO：校验输入的任务持续时间是否合法，必须是数字，不能小于10秒，不能大于60秒，否则弹出框
+            if (this.localFreeTaskDuration === '' || isNaN(this.localFreeTaskDuration) || this.localFreeTaskDuration > 60 || this.localFreeTaskDuration < 10) {
+                 // alert('请输入合法的任务持续时间(0-60s)');
+                 // 用ElMessage组件
+                this.$message({
+                    message: '请输入合法的任务持续时间(10-60s)',
+                    type: 'warning'
+                });
                 return;
             }
 

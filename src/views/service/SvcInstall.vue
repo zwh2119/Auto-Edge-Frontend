@@ -83,6 +83,7 @@
         installed.value = newValue;
         // console.log(installed.value);
       });
+      
       onMounted(async () => {
         // console.log("mount")
         try {

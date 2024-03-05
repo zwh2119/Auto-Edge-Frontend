@@ -1,6 +1,6 @@
 <template>
     <div>
-        <h3>周期任务执行结果</h3>
+        <h3>周期任务结果 - {{ prompt }}</h3>
     </div>
     <br>
     <div id="line-chart" style="width: 300px; height: 250px;"></div>

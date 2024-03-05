@@ -162,7 +162,11 @@ export default {
                 return;
             }
             // TODO: 拿到空的数组不更新，还渲染上一轮缓存中的数据
-            if(this.data == null || this.data.taskList === null || this.data.taskList === undefined || this.data.taskList == []) {
+            // if(this.data == null || this.data.taskList === null || this.data.taskList === undefined || this.data.taskList == []) {
+            //     return;
+            // }
+            // TODO2:废弃上面的TODO
+            if(this.data == null || this.data.taskList === null || this.data.taskList === undefined) {
                 return;
             }
             this.taskList = this.data.taskList;
@@ -175,7 +179,9 @@ export default {
         startAnimation() {
             console.log('start animation');
             console.log(this.data);
-            if(this.taskList === null || this.taskList.length === 0) {
+            if(this.taskList === null 
+            // || this.taskList.length === 0
+            ) {
                 return;
             }
             // console.log(this.data);
@@ -201,7 +207,7 @@ export default {
                         console.log("case 3");
                     }
                 }
-            }, 800); // Adjust interval as needed
+            }, 1500); // Adjust interval as needed
         }
     }
 };

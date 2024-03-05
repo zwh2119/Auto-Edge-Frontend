@@ -201,7 +201,7 @@ onMounted(() => {
 				.login-right-warp-main-title {
 					height: 130px;
 					line-height: 130px;
-					font-size: 15px;
+					font-size: 22px;
 					text-align: center;
 					letter-spacing: 3px;
 					animation: logoAnimation 0.3s ease;

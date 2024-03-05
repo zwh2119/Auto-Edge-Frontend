@@ -67,6 +67,22 @@ export default {
       console.log(installed.value);
     });
     const loading = ref(null)
+    setInterval(() => {
+      fetch('/api/install_state').then(response=> response.json())
+      .then(data=>{
+        // console.log(data);
+        installed.value = data['state'];
+        // console.log(response);
+        const val = data['state']
+        if(val === 'install'){
+          install_state.install();
+        }else{
+          install_state.uninstall();
+        }
+      }).catch(error=>{
+        ElMessage.error("出错了,请联系管理员",3000);
+      })
+    }, 1000);
     return {
       installed,
       loading,
@@ -125,6 +141,7 @@ export default {
         // console.error("请求失败:", error);
         ElMessage.error("请求失败，请稍后再试");
       }
+      
     },
     refresh(){
       console.log(this.selected_service)
@@ -140,10 +157,13 @@ export default {
         // console.error("请求失败:", error);
         ElMessage.error("请求失败，请联系管理员");
       }
-    }
+    },
+    
   },
   mounted() {
     this.getServiceList();
+    
+    
   },
 };
 </script>

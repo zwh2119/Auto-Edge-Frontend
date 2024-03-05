@@ -256,7 +256,7 @@ export default {
                 //         ]
             // },
 
-            maxBufferedTaskCacheSize: 10,
+            maxBufferedTaskCacheSize: 20,
         }
     },
 

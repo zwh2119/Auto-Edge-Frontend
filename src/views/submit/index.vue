@@ -62,12 +62,12 @@
             
               <div style="flex: 1;margin-top: 30px;">
                 <div>
-                  <span class="param" style="margin-right: 20px;">紧急程度(0-1)</span>
+                  <span class="param" style="margin-right: 20px;">紧急程度权重(0-1)</span>
                   <el-input v-model="urgency" placeholder="输入紧急程度" style="width: 100%; max-width: 200px;" />
                 </div>
                 <div style="margin-top: 10px;">
                   
-                  <span class="param" style="margin-right: 20px;">重要程度(0-1)</span>
+                  <span class="param" style="margin-right: 20px;">重要程度权重(0-1)</span>
                   <el-input v-model="importance" placeholder="输入重要程度" style="width: 100%; max-width: 200px;" />
                 </div>
               </div>
@@ -93,7 +93,7 @@
           <!-- 提交任务 -->
         <div style="display: flex; justify-content: center;margin-top: 20px;">
           <el-button type="primary" :disabled="state==='open'" :loading="loading" @click="submitTask">开启数据流</el-button>
-          <el-button type="danger" :disabled="state!=='open'" :loading="kill_loading" @click="stop_query" >关闭数据流</el-button>
+          <el-button type="danger" :disabled="state!=='open' || selected_label !== source_label" :loading="kill_loading" @click="stop_query" >关闭数据流</el-button>
         </div>
 
         </el-card>
@@ -151,9 +151,10 @@ data() {
 
         // 选择视频流
         selectItem(item){
-          console.log(item);
+          // console.log(item);
           this.selected_label = item.key.source_label;
           console.log(this.selected_label)
+          console.log(this.source_label);
         },
 
         // 提交任务
@@ -187,16 +188,20 @@ data() {
           }).then((response)=> response.json())
           .then(data=>{
             const state = data.state;
-            const msg = data.msg;
+            let msg = data.msg;
             this.loading = false;
             if(state === 'success'){
               this.state = 'open';
+                msg+=',页面即将刷新'
                 ElMessage({
                   message: msg,
                   showClose: true,
                   type: "success",
                   duration: 3000,
                 });
+                setTimeout(() => {
+                  location.reload();  
+                }, 3000);
               }else{
                 ElMessage({
                   message: msg,
@@ -218,9 +223,10 @@ data() {
               this.state = data.state;
               console.log(this.state);
               this.source_label = data.source_label;
+              console.log("query:" + this.source_label);
           
-              this.selected_label = this.source_label;
-              console.log(this.selected_label)
+              // this.selected_label = this.source_label;
+              console.log("query:" + this.selected_label)
             })
         },
         stop_query(){
