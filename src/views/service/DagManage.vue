@@ -61,7 +61,7 @@
                 <el-button
                 size="small"
                 type="danger"
-                @click="handleDelete(scope.$index, scope.row)"
+                @click="deleteWorkflow(scope.$index,scope.row.dag_id)"
                 >Delete</el-button
                 >
             </template>
@@ -73,7 +73,6 @@
         <br>
 
         <br>
-<!-- <br> -->
         
 
 
@@ -83,6 +82,7 @@
 
 <script>
 import { ElTable, ElTableColumn, ElTooltip, ElTag, ElInput, ElButton} from 'element-plus';
+import { ElMessage } from "element-plus";
 export default {
     components: {
         ElTable,
@@ -119,21 +119,49 @@ export default {
         };
     },
     methods: {
-        handleDelete(index, row) {
-            this.dagList.splice(index, 1);
-            this.updateDagList();
+        deleteWorkflow(index,dag_id){
+          this.dagList.splice(index, 1);
+          console.log(dag_id);
+          const content = {
+            'dag_id': dag_id
+          }
+          fetch('/api/delete_dag_workflow',{
+            method:'POST',
+            body:JSON.stringify(content)
+          }).then(response => response.json())
+          .then(data => {
+              const state = data['state']
+              const msg = data['msg']
+              this.showMsg(state,msg)
+          }).catch(error=>{
+            ElMessage.error("出错了,请联系管理员")
+            console.log(error);
+          })
         },
         handleNewSubmit(){
-            this.dagList.push({
-                "dag_name":this.newInputName,
-                "dag":JSON.parse(this.newInputDag)
-            });
-            this.updateDagList();
+          if(this.newInputName === '' || this.newInputName === null){
+            ElMessage.error("请填写服务名称")
+            return;
+          }
+          if(this.newInputDag === '' || this.newInputDag === null){
+            ElMessage.error("请选择流水线")
+            return;
+          }
+          const newData = {
+            "dag_name":this.newInputName,
+            "dag":JSON.parse(this.newInputDag)
+          }
+            // this.dagList.push({
+            //     "dag_name":this.newInputName,
+            //     "dag":JSON.parse(this.newInputDag)
+            // });
+            this.updateDagList(newData);
             this.newInputName = '';
             this.newInputDag = '';
         },
         getDagList(){
-            fetch('/api/get-dag-workflows-api') 
+          console.log('get_dag_workflows_api');
+            fetch('/api/get_dag_workflows_api') 
             .then(response => response.json())
             .then(data => {
                 console.log(data);
@@ -148,18 +176,39 @@ export default {
         fetchData(){
           this.getDagList();
         },
-        // TODO
-        updateDagList() {
-          fetch('/serv/update-dag-workflows-api', {
+        showMsg(state,msg){
+          if(state==='success'){
+              ElMessage({
+                message: msg,
+                showClose: true,
+                type: "success",
+                duration: 3000,
+              });
+            }else{
+              ElMessage({
+                message: msg,
+                showClose: true,
+                type: "error",
+                duration: 3000,
+              });
+            }
+        },
+        updateDagList(data) {
+          console.log(data);
+          fetch('/api/update_dag_workflows_api', {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json'
             },
-            body: JSON.stringify(this.dagList)
+            body: JSON.stringify(data)
           })
           .then(response => response.json())
           .then(data => {
-            console.log('Data sent successfully:', data);
+            const state = data['state'];
+            const msg = data['msg'];
+            console.log(state);
+            this.showMsg(state,msg)
+            // console.log('Data sent successfully:', data);
           })
           .catch(error => {
             // console.error('Error sending data:', error);
@@ -171,7 +220,7 @@ export default {
           const data = await response.json();
           // const data = ["face_detection","face_alignment","car_detection","helmet_detection","ixpe_preprocess","ixpe_sr_and_pc","ixpe_edge_observe"]
           this.services = data;
-          // console.log(this.services);
+          console.log(this.services);
       },
       putSvcIntoList(service){
         service = "\"" + service + "\""
@@ -193,12 +242,12 @@ export default {
           this.fetchData();
 
           // 每隔一段时间获取一次数据
-          setInterval(() => {
-            this.fetchData();
-          }, 5000); 
+          // setInterval(() => {
+          //   this.fetchData();
+          // }, 5000); 
 
           this.getServiceList();
-          setInterval(this.getServiceList, 5000);
+          // setInterval(this.getServiceList, 5000);
         },
 };
 </script>

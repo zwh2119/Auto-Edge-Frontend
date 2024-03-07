@@ -35,8 +35,8 @@ const viteConfig = defineConfig((mode: ConfigEnv) => {
 					rewrite: (path) => path.replace(/^\/gitee/, ''),
 				},
 				'/api': {
-					target: "http://114.212.81.11:8910",
-					// target: "http://127.0.0.1:5000",
+					// target: "http://114.212.81.11:8910",
+					target: "http://127.0.0.1:5000",
 					changeOrigin: true,
 					rewrite: path => path.replace(/^\/api/, '')
 				},

@@ -7,17 +7,48 @@ app = Flask(__name__)
 def get_content():
     # 这里可以根据需要生成内容
     content = [
-        {"road-detection":"路面监控"},
-        {"audio":"音频分类"},
-        {"imu":"惯性轨迹感知"},
-        {"edge-eye":"工业视觉纠偏"}
-    ]
+            {
+                "dag_id":"1",
+                "dag_name":"face"
+            },
+            {
+                "dag_id":"2",
+                "dag_name":"car"
+            }
+        ]
     return jsonify(content), 200
 
 @app.route('/get_service_list', methods=['GET'])
 def get_service_list():
     # 这里可以根据需要生成内容
     content = ["road-detection","audio","imu","edge-eye"]
+    return jsonify(content), 200
+@app.route('/get_all_service', methods=['GET'])
+def get_all_service():
+    # 这里可以根据需要生成内容
+    content = ["face_detection","face_alignment","car_detection","helmet_detection","ixpe_preprocess","ixpe_sr_and_pc","ixpe_edge_observe"]
+    return jsonify(content), 200
+@app.route('/get_dag_workflows_api', methods=['GET'])
+def get_dag_workflows_api():
+    # 这里可以根据需要生成内容
+    content = [
+	{
+		"dag_id":1,
+		"dag_name":"headup",
+		"dag":["face_detection","face_alignment"]
+	},
+	{
+		"dag_id":2,
+		"dag_name":"traffic",
+		"dag":["car_detection","plate_recognition"]
+	},
+	{
+		"dag_id":1,
+		"dag_name":"ixpe",
+		"dag":["ixpe_preprocess","ixpe_sr_and_pc","ixpe_edge_observe"]
+	}
+                
+]
     return jsonify(content), 200
 
 @app.route('/install_state', methods=['GET'])
@@ -39,14 +70,16 @@ def get_video_info():
                     "url": "rtsp/114.212.81.11...",
                     "describe":"某十字路口",
                     "resolution": "1080p",
-                    "fps":"25fps"
+                    "fps":"25fps",
+                    "importance":0.6
                 },
                 {
                     "name": "摄像头2",
                     "url": "rtsp/114.212.81.11...",
                     "describe":"某十字路口2",
                     "resolution": "1080p",
-                    "fps":"15fps"
+                    "fps":"15fps",
+                    "importance":0.6
                 }
             ]
         },
@@ -57,6 +90,7 @@ def get_video_info():
             "camera_list":[
                 {
                     "name": "摄像头1",
+                    "importance":0.6,
                     "url": "rtsp/114.212.81.11...",
                     "describe":"某十字路口",
                     "resolution": "1080p",
@@ -65,6 +99,7 @@ def get_video_info():
                 },
                 {
                     "name": "摄像头2",
+                    "importance":0.6,
                     "url": "rtsp/114.212.81.11...",
                     "describe":"某十字路口2",
                     "resolution": "1080p",
@@ -126,7 +161,7 @@ def get_video_info():
 @app.route('/query_state', methods=['GET'])
 def query_state():
     # 这里可以根据需要生成内容
-    content = {'state':'close','source_label':'car'}
+    content = {'state':'open','source_label':'car'}
     return jsonify(content), 200
 
 
@@ -185,8 +220,38 @@ def post_content():
         'msg': '成功'
     }
     return jsonify(response), 200
+@app.route('/datasource_config', methods=['POST'])
+def datasource_config():
+
+    # 这里可以根据用户输入进行处理
+    # 假设我们简单地将输入返回给用户
+    response = {
+        'state': 'success',
+        'msg': '成功'
+    }
+    return jsonify(response), 200
 @app.route('/stop_query', methods=['POST'])
 def stop_query():
+
+    # 这里可以根据用户输入进行处理
+    # 假设我们简单地将输入返回给用户
+    response = {
+        'state': 'success',
+        'msg': '成功'
+    }
+    return jsonify(response), 200
+@app.route('/update_dag_workflows_api', methods=['POST'])
+def update_dag_workflows_api():
+
+    # 这里可以根据用户输入进行处理
+    # 假设我们简单地将输入返回给用户
+    response = {
+        'state': 'success',
+        'msg': '成功'
+    }
+    return jsonify(response), 200
+@app.route('/delete_dag_workflow', methods=['POST'])
+def delete_dag_workflow():
 
     # 这里可以根据用户输入进行处理
     # 假设我们简单地将输入返回给用户

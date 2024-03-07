@@ -9,7 +9,7 @@
             <div>
               <!-- <el-form-item label="选择任务"> -->
                 <el-select style="width: 300px;" v-model="selectedDetectionIndex" @change="handleChange" placeholder="请选择任务">
-                  <el-option v-for="(option, index) in detectionOptions" :key="index" :label="option.chineseLabel" :value="index"></el-option>
+                  <el-option v-for="(option, index) in detectionOptions" :key="index" :label="option.dag_name" :value="index"></el-option>
                 </el-select>
               </div>
           </div>
@@ -66,7 +66,6 @@
         selectedImages: [],
         imageList:[],
         selectedDetectionIndex:null,
-        // detectionOptions:[],
         selectedUrls: {},
         successMessage: '',
         // installed: install_state.status, // install:已安装, uninstall:未安装
@@ -90,19 +89,17 @@
           const response = await axios.get('/api/task');
           if (response.data !== null) {
             // console.log(response.data)
-            detectionOptions.value = response.data.map((item) => {
-              const key = Object.keys(item)[0];
-              const value = item[key];
-              return { chineseLabel: value, englishLabel: key };
-            });
+            // detectionOptions.value = response.data.map((item) => {
+            //   const key = Object.keys(item)[0];
+            //   const value = item[key];
+            //   return { chineseLabel: value, englishLabel: key };
+            // });
+            detectionOptions.value = response.data;
+            console.log(detectionOptions.value);
           }
         } catch (error) {
           console.error('Failed to fetch detection options', error);
-          detectionOptions.value = [
-            { chineseLabel: '路面监控', englishLabel: 'road-detection' },
-            { chineseLabel: '音频分类', englishLabel: 'audio' },
-          ];
-          // console.log(this.detectionOptions);
+          ElMessage.error("出错了,请联系工作人员")
         }
         
         try {
@@ -137,9 +134,10 @@
         try {
           const index = this.selectedDetectionIndex;
           if (index !== null && index >= 0 && index < this.detectionOptions.length) {
-            const englishLabel = this.detectionOptions[index].englishLabel || '';
+            // const englishLabel = this.detectionOptions[index].englishLabel || '';
+            const id = this.detectionOptions[index].dag_id
             // console.log(englishLabel);
-            const response = await axios.get(`/api/get_task_stage/${englishLabel}`);
+            const response = await axios.get(`/api/get_task_stage/${id}`);
             const data = response.data;
             this.stageMessage = data;
             // console.log(data.length)
@@ -158,7 +156,8 @@
     submitService(){
       const index = this.selectedDetectionIndex;
       if (index !== null && index >= 0 && index < this.detectionOptions.length) {
-        const taskName = this.detectionOptions[index].englishLabel || '';
+        // const taskName = this.detectionOptions[index].englishLabel || '';
+        const dagId = this.detectionOptions[index].dag_id;
         const image_list = Object.values(this.imageList);
         console.log(image_list)
         if (image_list.includes('')) {
@@ -166,10 +165,9 @@
             return; // 提前结束方法
         }
 
-        // console.log(taskName);
         // console.log(image_list);
         const content = {
-          'task_name':taskName,
+          'dag_id':dagId,
           'image_list':image_list
         }
         let task_info = JSON.stringify(content);
@@ -212,36 +210,6 @@
               // console.error(error);
               ElMessage.error("网络故障,上传失败",3000);
             });
-      }
-      
-    },
-    async mounted(){
-      // 1. 获取可用服务
-			try {
-				const response = await axios.get('/api/task');
-				if(response.data !== null){
-					this.detectionOptions = response.data.map((item) => {
-						const key = Object.keys(item)[0];
-						const value = item[key];
-						return { chineseLabel: value, englishLabel: key };
-						});
-				}
-				
-			} catch (error) {
-				console.error('Failed to fetch detection options', error);
-				this.detectionOptions = [
-					{ chineseLabel: '路面监控', englishLabel: 'road-detection' },
-					{ chineseLabel: '音频分类', englishLabel: 'audio' },
-				];
-        // console.log(this.detectionOptions);
-      }
-      // 服务是否已安装
-      try{
-        const response = await axios.get('/api/install_state');
-        this.installed = response.data['state'];
-        // console.log(this.installed);
-      }catch(error){
-        console.error("query state error");
       }
       
     },

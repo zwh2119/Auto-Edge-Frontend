@@ -7,11 +7,12 @@
         <el-card shadow="hover" style="margin: 20px;">
           <div style="display: flex; align-items: center;">
               <h3>数据流</h3>
-              <input type="file" style="width: 300px; margin-left: 20px;"/>
+              <input type="file" ref="fileInput" style="width: 300px; margin-left: 20px;"/>
+              <!-- <button @click="uploadFile">上传文件</button> -->
+              <el-button plain @click="uploadFile" style="margin-left: 20px;">上传文件</el-button>
           </div>
 
 
-            <!-- todo:点击后填充post请求 -->
 
            <!-- 显示视频流 -->
               <div style="display: flex;height: 300px;overflow-y: scroll;justify-content: center;">
@@ -28,7 +29,6 @@
                       <div style="width: 100%; display: flex; align-items: center;">
                         <!-- <p style="visibility: hidden;">数据流列表:</p> -->
                         <div style="margin-right: 10px;">{{ camera.name }}</div>
-                        <!-- <el-button :plain="true"  @click.stop="handleDetailClick(camera)">查看详情</el-button> -->
                         <el-tooltip
                           class="box-item"
                           effect="dark"
@@ -39,6 +39,7 @@
                         <template #content>
                           推流地址:{{ camera.url }}<br/>
                           简要描述:{{ camera.describe }}<br/>
+                          重要程度:{{ camera.importance }}<br/>
                           <div v-if="camera.resolution">分辨率:{{ camera.resolution }}</div>
                           <div v-if="camera.fps">帧率:{{ camera.fps }}</div>
                         </template>
@@ -104,7 +105,7 @@
           
           <!-- 提交任务 -->
         <div style="display: flex; justify-content: center;margin-top: 20px;">
-          <el-button type="primary" :disabled="state==='open'" :loading="loading" @click="submitTask">开启数据流</el-button>
+          <el-button type="primary" :disabled="state==='open' || selected_label === null" :loading="loading" @click="submitTask">开启数据流</el-button>
           <el-button type="danger" :disabled="state!=='open' || selected_label !== source_label" :loading="kill_loading" @click="stop_query" >关闭数据流</el-button>
         </div>
 
@@ -115,10 +116,6 @@
   
 <script> 
 import { ElMessage } from "element-plus";
-// import {
-//   Search,
-//   // Info
-// } from '@element-plus/icons-vue'
 export default {
 data() {
     return {
@@ -134,7 +131,6 @@ data() {
         info: null,
         
         // 已选择的视频流相关
-        // selected:null,
         selected_label:null,
 
         state:null,
@@ -145,32 +141,78 @@ data() {
         };
     },
     methods: {
-        handleDetailClick(item){
-          let msg = "";
-          for(var k in item){
-            msg += k + ":" + item[k] + '\n';
+      showMsg(state,msg){
+        if(state === 'success'){
+          ElMessage({
+            message: msg,
+            showClose: true,
+            type: "success",
+            duration: 3000,
+          });
+        }else{
+          ElMessage({
+            message: msg,
+            showClose: true,
+            type: "error",
+            duration: 3000,
+          });
+        }
+      },
+      handleError(error){
+        ElMessage.error("出错了,请联系管理员")
+        console.log(error);
+      },
+        uploadFile() {
+          // 获取文件输入框的引用
+          const fileInput = this.$refs.fileInput;
+          console.log(fileInput.files.length);
+
+          if (fileInput.files.length > 0) {
+            const formData = new FormData();
+            // 将文件添加到FormData对象中
+            formData.append('file', fileInput.files[0]);
+
+            const url = '/api/datasource_config';
+
+            // 发送POST请求
+            fetch(url, {
+              method: 'POST',
+              body: formData
+            })
+            .then(response=>response.json())
+            .then(data=>{
+              const state = data['state']
+              const msg = data['msg']
+              this.showMsg(state,msg);
+              this.getInfo();
+            })
+            .catch(error => {
+              this.handleError(error)
+            });
+          } else {
+            ElMessage.error("请选择文件")
           }
-          alert(msg)
         },
+
         // 获取视频流信息
         getInfo() {
           fetch("/api/node/get_video_info")
             .then((response) => response.json())
             .then((data) => {
+              // console.log(data);
               this.info = data;
             })
             .catch((error) => {
-              console.log("something error");
+              this.handleError(error)
             });
 
         },
 
         // 选择视频流
         selectItem(item){
-          // console.log(item);
           this.selected_label = item.key.source_label;
-          console.log(this.selected_label)
-          console.log(this.source_label);
+          // console.log(this.selected_label)
+          // console.log(this.source_label);
         },
 
         // 提交任务
@@ -208,28 +250,15 @@ data() {
             this.loading = false;
             if(state === 'success'){
               this.state = 'open';
-                msg+=',页面即将刷新'
-                ElMessage({
-                  message: msg,
-                  showClose: true,
-                  type: "success",
-                  duration: 3000,
-                });
-                setTimeout(() => {
-                  location.reload();  
-                }, 3000);
-              }else{
-                ElMessage({
-                  message: msg,
-                  showClose: true,
-                  type: "error",
-                  duration: 3000,
-                });
-              }
+              msg+=',页面即将刷新'
+              setTimeout(() => {
+                location.reload();  
+              }, 3000);
+            }
+            this.showMsg(state,msg)
           }).catch(error =>{
             this.loading = false;
-            // console.log('submit task fail');
-            ElMessage.error("网络故障,上传失败");
+            this.handleError(error)
           })
         },
 
@@ -239,10 +268,8 @@ data() {
               this.state = data.state;
               console.log(this.state);
               this.source_label = data.source_label;
-              console.log("query:" + this.source_label);
-          
-              // this.selected_label = this.source_label;
-              console.log("query:" + this.selected_label)
+              // console.log("query:" + this.source_label);
+              // console.log("query:" + this.selected_label)
             })
         },
         stop_query(){
@@ -263,25 +290,14 @@ data() {
                 this.kill_loading = false;
                 this.state = 'close'
                 this.selected_label = null;
-                ElMessage({
-                  message: msg,
-                  showClose: true,
-                  type: "success",
-                  duration: 3000,
-                });
               }else{
-                this.kill_loading = false;
-                ElMessage({
-                  message: msg,
-                  showClose: true,
-                  type: "error",
-                  duration: 3000,
-                });
+                this.kill_loading = false;  
               }
+              this.showMsg(state,msg);
             }).catch(error =>{
               this.kill_loading = false;
               // console.log('submit task fail');
-              ElMessage.error("网络故障,上传失败,",error);
+              this.handleError(error)
             })
         }
   },
@@ -289,54 +305,7 @@ data() {
       
       this.query_state();
       this.getInfo();
-      // 静态填充
-    //     this.info = [
-    //     {
-    //         "source_label": "car",
-    //         "source_name": "交通监控摄像头",
-    //         "source_type": "视频流",
-    //         "camera_list":[
-    //             {
-    //                 "name": "摄像头1",
-    //                 "url": "rtsp/114.212.81.11...",
-    //                 "describe":"某十字路口",
-    //                 "resolution": "1080p",
-    //                 "fps":"25fps"
-    //             },
-    //             {
-    //                 "name": "摄像头2",
-    //                 "url": "rtsp/114.212.81.11...",
-    //                 "describe":"某十字路口2",
-    //                 "resolution": "1080p",
-    //                 "fps":"15fps"
-    //             }
-    //         ]
-    //     },
-    //     {
-    //         "source_label": "imu",
-    //         "source_name": "交通监控摄像头",
-    //         "source_type": "视频流",
-    //         "camera_list":[
-    //             {
-    //                 "name": "摄像头1",
-    //                 "url": "rtsp/114.212.81.11...",
-    //                 "describe":"某十字路口",
-    //                 "resolution": "1080p",
-    //                 "fps":"25fps"
-
-    //             },
-    //             {
-    //                 "name": "摄像头2",
-    //                 "url": "rtsp/114.212.81.11...",
-    //                 "describe":"某十字路口2",
-    //                 "resolution": "1080p",
-    //                 "fps":"15fps"
-    //             }
-    //         ]
-    //     }
-
-    // ];
-    console.log(this.info)
+      // console.log(this.info)
             
     },
 };
