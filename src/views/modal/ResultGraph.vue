@@ -82,7 +82,7 @@ export default {
                     type: 'value',
                     name: this.prompt,
                     nameLocation: 'middle', // 使轴名称居中显示
-                    nameGap: 25, // 与轴的距离
+                    nameGap: 35, // 与轴的距离
                     axisLine: {
                         lineStyle: {
                             color: '#999' // x轴线颜色

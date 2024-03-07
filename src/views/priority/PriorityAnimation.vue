@@ -2,18 +2,18 @@
     <div class="pipeline">
         <div v-for="(stage, index) in pipelineLength" :key="index" class="stage" :style="{ width: stageWidth }">
             <div class="background">
-                <span class="stage-index">Stage {{ index + 1 }}</span> <!-- 添加阶段文字 -->
+                <span class="stage-index">处理阶段 {{ index + 1 }}</span> <!-- 添加阶段文字 -->
             </div>
             <!-- <div class="arrow">=></div> -->
             <div class="task-container" :class="{ 'animate': currentTask && currentTask.stageIndex === index }">
                 <div v-if="currentTask && currentTask.stageIndex === index" class="task">
                     <div class="taskId">task {{ currentTask.taskId }}</div>
                     <div class="priority">
-                        Urgency: {{ currentTask.priorityTrace[index].urgency }}
+                        紧急程度: {{ currentTask.priorityTrace[index].urgency }}
                         <br>
-                        Importance: {{ currentTask.priorityTrace[index].importance }}
+                        重要程度: {{ currentTask.priorityTrace[index].importance }}
                         <br>
-                        Priority: {{ currentTask.priorityTrace[index].priority }}
+                        优先级: {{ currentTask.priorityTrace[index].priority }}
                     </div>
                 </div>
             </div>

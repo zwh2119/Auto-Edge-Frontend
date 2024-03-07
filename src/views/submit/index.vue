@@ -5,7 +5,12 @@
         <!-- 选择视频流 -->
         <!-- <el-card shadow="hover" style="margin: 20px;display: flex;justify-content: center;"> -->
         <el-card shadow="hover" style="margin: 20px;">
-          <div slot="header" style="font-size: 20px;font-weight: bold;">选择视频流</div>
+          <div style="display: flex; align-items: center;">
+              <h3>数据流</h3>
+              <input type="file" style="width: 300px; margin-left: 20px;"/>
+          </div>
+
+
             <!-- todo:点击后填充post请求 -->
 
            <!-- 显示视频流 -->
@@ -56,7 +61,14 @@
 
         <!-- 设置任务约束 -->
         <el-card shadow="hover" style="margin: 20px;">
-          <div slot="header" style="font-size: 20px;font-weight: bold;">设置任务约束</div>
+          <div slot="header" style="font-size: 20px;font-weight: bold;">设置任务约束
+              <el-tooltip placement="right">
+                <template #content>
+                  紧急程度和重要程度和需要为1<br/>越趋于0表示越不重要/不紧急,越趋于1表示越重要/紧急
+                </template>
+                <el-button size="small" circle>i</el-button>
+              </el-tooltip>
+          </div>
           <el-row>
             <el-col :span="12">
             
@@ -103,6 +115,10 @@
   
 <script> 
 import { ElMessage } from "element-plus";
+// import {
+//   Search,
+//   // Info
+// } from '@element-plus/icons-vue'
 export default {
 data() {
     return {

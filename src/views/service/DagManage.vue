@@ -1,68 +1,15 @@
 <template>
     <div class="outline">
-        <div>
-          <h3>现有任务流水线</h3>
-        </div>
-
-        <!-- <el-table :data="dagList" border style="width: 100%">
-            <el-table-column prop="dag_name" label="name" width="180" />
-            <el-table-column prop="dag" label="dag" width="360" />
-            
-        </el-table> -->
-
-        <el-table :data="dagList" style="width: 100%">
-            <el-table-column label="dag_name" width="180">
-            <template #default="scope">
-                <div style="display: flex; align-items: center">
-                <!-- <el-icon><timer /></el-icon> -->
-                <span style="margin-left: 10px">{{ scope.row.dag_name }}</span>
-                </div>
-            </template>
-            </el-table-column>
-            <el-table-column label="dag" width="540">
-            <template #default="scope">
-                <div>{{ scope.row.dag }}</div>
-            </template>
-            </el-table-column>
-            <el-table-column label="Operations">
-            <template #default="scope">
-                <el-button size="small" @click="handleEdit(scope.$index, scope.row)"
-                >Edit</el-button
-                >
-                <el-button
-                size="small"
-                type="danger"
-                @click="handleDelete(scope.$index, scope.row)"
-                >Delete</el-button
-                >
-            </template>
-            </el-table-column>
-        </el-table>
-
-        <br>
-        <div>
-            <el-input v-model="editInput" :disabled="editDisabled" placeholder="Please input" />
-        </div>
-
-        <br>
-
-        <div>
-          <el-button type="primary" round @click="handleEditSubmit">提交更改</el-button>
-          <!-- <el-button round>修改</el-button>
-          <el-button round>删除</el-button> -->
-        </div>
-        <br>
-<br>
-        <div>
+      <div>
           <h3>新增任务流水线</h3>
         </div>
 
         <div>
-                <div class="new-dag-font-style">dag_name: </div>
+                <div class="new-dag-font-style">流水线名称: </div>
                 <el-input v-model="newInputName" placeholder="name" />
                 <br>
                 <br>
-                <div class="new-dag-font-style">dag: </div>
+                <div class="new-dag-font-style">流水线: </div>
 
                 <ul style="list-style-type: none" class="svc-container">
                   <li
@@ -89,6 +36,45 @@
           <!-- <el-button round>修改</el-button>
           <el-button round>删除</el-button> -->
         </div>
+        <br/><br/>
+        <div>
+          <h3>现有任务流水线</h3>
+        </div>
+
+        <el-table :data="dagList" style="width: 100%">
+            <el-table-column label="dag_name" width="180">
+            <template #default="scope">
+                <div style="display: flex; align-items: center">
+                <!-- <el-icon><timer /></el-icon> -->
+                <span style="margin-left: 10px">{{ scope.row.dag_name }}</span>
+                </div>
+            </template>
+            </el-table-column>
+            <el-table-column label="dag" width="540">
+            <template #default="scope">
+                <div>{{ scope.row.dag }}</div>
+            </template>
+            </el-table-column>
+            <el-table-column label="Operations">
+            <template #default="scope">
+                
+                <el-button
+                size="small"
+                type="danger"
+                @click="handleDelete(scope.$index, scope.row)"
+                >Delete</el-button
+                >
+            </template>
+            </el-table-column>
+        </el-table>
+
+        <br>
+
+        <br>
+
+        <br>
+<!-- <br> -->
+        
 
 
 
@@ -133,27 +119,9 @@ export default {
         };
     },
     methods: {
-        handleEdit(index, row) {
-            this.editDisabled = false;
-            this.editingIndex = index;
-            this.editingRow = row;
-            this.editInput = JSON.stringify(row.dag);
-        },
         handleDelete(index, row) {
             this.dagList.splice(index, 1);
             this.updateDagList();
-        },
-        handleEditSubmit() {
-            // 更新数据列表中对应索引的行
-            // this.editingRow.dag = JSON.parse(this.editInput);
-            // 更新dagList字段
-            this.dagList[this.editingIndex].dag = JSON.parse(this.editInput);
-            this.updateDagList();
-
-            // 重置编辑状态
-            this.editingIndex = -1;
-            this.editInput = '';
-            this.editDisabled = true;
         },
         handleNewSubmit(){
             this.dagList.push({
@@ -165,7 +133,7 @@ export default {
             this.newInputDag = '';
         },
         getDagList(){
-            fetch('/serv/get-dag-workflows-api') 
+            fetch('/api/get-dag-workflows-api') 
             .then(response => response.json())
             .then(data => {
                 console.log(data);
@@ -180,6 +148,7 @@ export default {
         fetchData(){
           this.getDagList();
         },
+        // TODO
         updateDagList() {
           fetch('/serv/update-dag-workflows-api', {
             method: 'POST',
@@ -198,7 +167,7 @@ export default {
           });
         },
         async getServiceList() {
-          const response = await fetch("/serv/get_service_list");
+          const response = await fetch("/api/get_all_service");
           const data = await response.json();
           // const data = ["face_detection","face_alignment","car_detection","helmet_detection","ixpe_preprocess","ixpe_sr_and_pc","ixpe_edge_observe"]
           this.services = data;
