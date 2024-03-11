@@ -1,0 +1,19 @@
+npm ERR! Missing script: "serve"
+npm ERR! 
+npm ERR! To see a list of scripts, run:
+npm ERR!   npm run
+
+npm ERR! A complete log of this run can be found in:
+npm ERR!     /home/hx/.npm/_logs/2024-03-09T07_37_29_477Z-debug-0.log
+
+> vue-next-admin@2.4.33 dev
+> vite
+
+Port 8888 is in use, trying another one...
+
+  VITE v4.2.1  ready in 451 ms
+
+  ➜  Local:   http://localhost:8889/
+  ➜  Network: http://114.212.81.11:8889/
+  ➜  Network: http://10.244.111.0:8889/
+  ➜  Network: http://169.254.96.16:8889/

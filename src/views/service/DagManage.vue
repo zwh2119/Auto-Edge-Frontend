@@ -5,12 +5,22 @@
         </div>
 
         <div>
-                <div class="new-dag-font-style">流水线名称: </div>
-                <el-input v-model="newInputName" placeholder="name" />
+                <div class="new-dag-font-style">流水线名称 </div>
+                <el-input v-model="newInputName" placeholder="请填写名称" />
                 <br>
                 <br>
-                <div class="new-dag-font-style">流水线: </div>
-
+                <div style="display: inline;">
+                  <div class="new-dag-font-style">服务容器
+                  
+                  <el-tooltip placement="right">
+                    <template #content>
+                      来自docker镜像仓库：https://hub.docker.com/repositories/onecheck
+                    </template>
+                    <el-button size="small" circle>i</el-button>
+                  </el-tooltip>
+                  
+                </div>
+                </div>
                 <ul style="list-style-type: none" class="svc-container">
                   <li
                     v-for="(service, index) in services"
@@ -25,7 +35,7 @@
                   </li>
                 </ul>
 
-                <el-input v-model="newInputDag" placeholder="[]" />
+                <el-input v-model="newInputDag" placeholder="[]" disabled="disabled" />
 
 
         </div>
@@ -33,6 +43,7 @@
 
         <div>
           <el-button type="primary" round @click="handleNewSubmit">提交新增</el-button>
+          <el-button type="primary" round @click="clearInput">清空已选</el-button>
           <!-- <el-button round>修改</el-button>
           <el-button round>删除</el-button> -->
         </div>
@@ -42,7 +53,7 @@
         </div>
 
         <el-table :data="dagList" style="width: 100%">
-            <el-table-column label="dag_name" width="180">
+            <el-table-column label="服务名称" width="180">
             <template #default="scope">
                 <div style="display: flex; align-items: center">
                 <!-- <el-icon><timer /></el-icon> -->
@@ -50,12 +61,12 @@
                 </div>
             </template>
             </el-table-column>
-            <el-table-column label="dag" width="540">
+            <el-table-column label="流水线" width="540">
             <template #default="scope">
                 <div>{{ scope.row.dag }}</div>
             </template>
             </el-table-column>
-            <el-table-column label="Operations">
+            <el-table-column label="操作">
             <template #default="scope">
                 
                 <el-button
@@ -90,7 +101,7 @@ export default {
         ElTooltip,
         ElTag,
         ElInput,
-        ElButton
+        ElButton,
     },
     data(){
         return{
@@ -102,23 +113,14 @@ export default {
             editingIndex: -1,
             editingRow: null,
             dagList:[
-                // {
-                //     "dag_name":"headup",
-                //     "dag":["face_detection","face_alignment"]
-                // },
-                // {
-                //     "dag_name":"traffic",
-                //     "dag":["car_detection","plate_recognition"]
-                // },
-                // {
-                //     "dag_name":"ixpe",
-                //     "dag":["ixpe_preprocess","ixpe_sr_and_pc","ixpe_edge_observe"]
-                // }
                 
             ],
         };
     },
     methods: {
+        clearInput(){
+          this.newInputDag = ''
+        },
         deleteWorkflow(index,dag_id){
           this.dagList.splice(index, 1);
           console.log(dag_id);
@@ -131,8 +133,12 @@ export default {
           }).then(response => response.json())
           .then(data => {
               const state = data['state']
-              const msg = data['msg']
-              this.showMsg(state,msg)
+              let msg = data['msg']
+              msg+=',即将刷新页面'
+              this.showMsg(state,msg);
+              setTimeout(() => {
+                location.reload()
+              }, 2000);
           }).catch(error=>{
             ElMessage.error("出错了,请联系管理员")
             console.log(error);
@@ -207,12 +213,12 @@ export default {
             const state = data['state'];
             const msg = data['msg'];
             console.log(state);
-            this.showMsg(state,msg)
-            // console.log('Data sent successfully:', data);
+            this.showMsg(state,msg);
+            this.getDagList();
+            location.reload()
           })
           .catch(error => {
-            // console.error('Error sending data:', error);
-            console.error('Error sending data');
+            console.error('Error sending data:', error);
           });
         },
         async getServiceList() {
@@ -236,6 +242,7 @@ export default {
           }   
       }
     }
+    
   },
   mounted() {
           // 初次加载数据

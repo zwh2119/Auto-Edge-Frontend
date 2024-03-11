@@ -65,7 +65,10 @@
           <div slot="header" style="font-size: 20px;font-weight: bold;">设置任务约束
               <el-tooltip placement="right">
                 <template #content>
-                  紧急程度和重要程度和需要为1<br/>越趋于0表示越不重要/不紧急,越趋于1表示越重要/紧急
+                  任务优先级由紧急程度、重要程度加权计算<br/>
+                  任务优先级 = 紧急程度*紧急程度权重 + 重要程度*重要程度权重<br>
+                  紧急程度权重、重要程度权重范围为0-1，和需要为1 <br>
+                  重要程度由数据流配置预设，紧急程度根据任务执行情况动态变化 <br>
                 </template>
                 <el-button size="small" circle>i</el-button>
               </el-tooltip>
@@ -255,6 +258,7 @@ data() {
                 location.reload();  
               }, 3000);
             }
+            localStorage.setItem('source_item',this.selected_label)
             this.showMsg(state,msg)
           }).catch(error =>{
             this.loading = false;
@@ -290,6 +294,7 @@ data() {
                 this.kill_loading = false;
                 this.state = 'close'
                 this.selected_label = null;
+                localStorage.removeItem('source_item');
               }else{
                 this.kill_loading = false;  
               }
@@ -305,6 +310,8 @@ data() {
       
       this.query_state();
       this.getInfo();
+      this.selected_label = localStorage.getItem('source_item')
+      console.log('mount:',this.selected_label);
       // console.log(this.info)
             
     },
