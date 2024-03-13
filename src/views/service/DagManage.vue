@@ -27,10 +27,19 @@
                     :key="index"
                     class="svc-item"
                   >
-                    <el-button
+                    <!-- <el-button
                       :label="service"
                       @click="putSvcIntoList(service)"
-                      >{{ service }}</el-button>
+                      >{{ service }}</el-button> -->
+                      <el-tooltip placement="top">
+                        <template #content>
+                          {{ service.description }}
+                        </template>
+                        <el-button
+                          :label="service.service_name"
+                          @click="putSvcIntoList(service.service_name)"
+                          >{{ service.service_name }}</el-button>
+                      </el-tooltip>
                     <!-- <el-divider /> -->
                   </li>
                 </ul>
@@ -73,7 +82,7 @@
                 size="small"
                 type="danger"
                 @click="deleteWorkflow(scope.$index,scope.row.dag_id)"
-                >Delete</el-button
+                >删除</el-button
                 >
             </template>
             </el-table-column>
@@ -138,7 +147,7 @@ export default {
               this.showMsg(state,msg);
               setTimeout(() => {
                 location.reload()
-              }, 2000);
+              }, 1000);
           }).catch(error=>{
             ElMessage.error("出错了,请联系管理员")
             console.log(error);

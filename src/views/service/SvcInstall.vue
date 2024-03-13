@@ -32,7 +32,7 @@
                     :value="item.image_name + '&' + item.url"
                 ></el-option>
             </el-select>
-            <p v-if="stage.selected" style="margin-top: 10px; font-size: 14px;">仓库url:{{ stage.selected.split('&')[1]  }}</p>
+            <p v-if="stage.selected" style="margin-top: 10px; font-size: 14px;">{{ stage.selected.split('&')[1]  }}</p>
             <el-divider v-if="index < selectedImages.length - 1"></el-divider>
             <!-- {{ stage.selected }} -->
         </div>
