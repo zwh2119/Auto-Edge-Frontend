@@ -14,7 +14,7 @@
         <!-- if freeTaskState is 2, show this div -->
         <div v-else-if="freeTaskState === 2">
             <p>当前自由任务已完成!</p>
-        <div id="free-delay-chart" style="width: 1000px; height: 300px;"></div>
+        <div id="free-delay-chart" style="width: 55vw; height: 30vh;"></div>
         <br>
         <!-- 对freeTaskResult中的每个kv 渲染 -->
         <div style="text-align: center;">

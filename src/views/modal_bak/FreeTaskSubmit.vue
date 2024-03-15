@@ -15,18 +15,18 @@
             <br>
             <div class="input-container" style="font-size: large;">
                 <label for="free-task-duration">任务持续时间(s): </label>
-                <input v-if="localFreeTaskState === 0" type="text" v-model="localFreeTaskDuration" :disabled="disabled" :style="{ 'width': '90px', 'height': '30px'  }"
+                <input v-if="localFreeTaskState === 0" type="text" v-model="localFreeTaskDuration" :disabled="disabled" :style="{ 'width': '8vw', 'height': '5vh' }"
                     placeholder="请输入任务持续时间" />
-                <input v-else-if="localFreeTaskState === 1 || localFreeTaskState === 2" type="text" :disabled="disabled" :style="{ 'width': '90px', 'height': '30px'  }"
+                <input v-else-if="localFreeTaskState === 1 || localFreeTaskState === 2" type="text" :disabled="disabled" :style="{ 'width': '8vw', 'height': '5vh' }"
                     :value="localFreeTaskDuration" disabled />
             </div>
             <!-- 下拉框从freeTaskMenu中选择自由任务类型 -->
             <div class="input-container" style="font-size: large;">
                 <label for="free-task-type">自由任务类型: </label>
-                <select v-if="localFreeTaskState === 0" v-model="localFreeTaskType" :disabled="disabled" :style="{ 'width': '130px', 'height': '30px' }">
+                <select v-if="localFreeTaskState === 0" v-model="localFreeTaskType" :disabled="disabled" :style="{ 'width': '10vw', 'height': '5vh' }">
                     <option v-for="item in freeTaskMenu" :key="item" :value="item">{{ item }}</option>
                 </select>
-                <select v-else-if="localFreeTaskState === 1 || localFreeTaskState === 2" :disabled="disabled" :style="{ 'width': '130px', 'height': '30px' }" :value="localFreeTaskType" disabled>
+                <select v-else-if="localFreeTaskState === 1 || localFreeTaskState === 2" :disabled="disabled" :style="{ 'width': '10vw', 'height': '5vh' }" :value="localFreeTaskType" disabled>
                     <option v-for="item in freeTaskMenu" :key="item" :value="item">{{ item }}</option>
                 </select>
             </div>
