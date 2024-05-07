@@ -68,25 +68,71 @@
                 </div>
             </el-col>
         </el-row>
-
+        <el-row :gutter="15" class="home-card-two mb15 free-manage">
+            <el-col :xs="24" :sm="24" :md="8" :lg="8" :xl="8">
+                <div class="home-card-item">
+                    <div style="height: 100%">
+                        <div class="flex-margin flex w100">
+                            <div class="flex-auto">
+                                <FreeTaskSubmit :freeTaskState="freeTaskState" :freeTaskDuration="freeTaskDuration" :freeTaskType="freeTaskType"
+                                    :selectedDataSource="selectedDataSource" @freeTaskState="handleStateUpdate"
+                                    @freeTaskDuration="handleDurationUpdate" @freeTaskType="handleTypeUpdate"
+                                    :disabled="!selectedDataSource || !(this.freeTaskState === 0)"
+                                    :freeTaskMenu="free_task_menu"/>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </el-col>
+            <!-- <el-col :xs="24" :sm="24" :md="6" :lg="6" :xl="6">
+                <div class="home-card-item">
+                    <div style="height: 100%">
+                        <div class="flex-margin flex w100">
+                            <div class="flex-auto">
+                                <FreeTaskResult :freeTaskState="freeTaskState" :freeTaskResult="filteredFreeResultData" />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </el-col> -->
+            <el-col :xs="24" :sm="24" :md="16" :lg="16" :xl="16">
+                <div class="home-card-item">
+                    <div style="height: 100%">
+                        <div class="flex-margin flex w100">
+                            <div class="flex-auto">
+                                <FreeTaskDelay :freeTaskState="freeTaskState" :freeTaskDelay="filteredFreeDelayData" :freeTaskResult="filteredFreeResultData"/>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </el-col>
+        </el-row>
     </div>
 </template>
 
 <script>
+
+// 除了FreeTaskSubmit，其他组件应该只负责渲染父组件传递的数据
+// freexxxx 通过freeTaskState控制显示状态
+// TODO1: 切换数据源时，应当重新向后端请求数据，更新freeTaskState
 
 
 import { reactive } from 'vue'
 import DataVisualize from './DataVisualize.vue'
 import ResultGraph from './ResultGraph.vue'
 import DelayGraph from './DelayGraph.vue'
-
+import FreeTaskSubmit from './FreeTaskSubmit.vue'
+import FreeTaskResult from './FreeTaskResult.vue'
+import FreeTaskDelay from './FreeTaskDelay.vue'
 
 export default {
     components: {
         DataVisualize,
         ResultGraph,
         DelayGraph,
-
+        FreeTaskSubmit,
+        FreeTaskResult,
+        FreeTaskDelay
     },
     data() {
         return {
@@ -114,6 +160,14 @@ export default {
             result_title_prompt: null,
             result_text_prompt: null,
             delay_text_prompt: null,
+            free_task_menu: null,
+
+            // 自由任务状态，每次切换数据源时需要重新向后端请求
+            // 0: 无自由任务（无其他字段） 1: 有自由任务（有duration字段） 2: 任务已完成（包含duration和执行结果）
+            freeTaskState: 0,
+            freeTaskDuration: 0,
+            freeTaskType: null,
+            freeTaskResult: null,
 
             bufferedTaskCache: {},
             // {
@@ -510,15 +564,121 @@ export default {
                     this.result_title_prompt = data.result_title_prompt;
                     this.result_text_prompt = data.result_text_prompt;
                     this.delay_text_prompt = data.delay_text_prompt;
+                    this.free_task_menu = data.free_task_menu;
+                });
+        },
+
+        // 4. 获取自由任务状态
+        // /free_state/{source}
+        // 后端返回json格式
+        // return {
+        //     'state': 0/1,
+        //     'duration': 100
+        // }
+        getFreeTaskState() {
+
+            // for test
+            // this.freeTaskState = 2;
+            // this.freeTaskDuration = 100;
+            // return;
+
+            fetch('/api/free_state/' + this.selectedDataSource)
+                .then(response => response.json())
+                .then(data => {
+                    if (!data) {
+                        return;
+                    }
+                    this.freeTaskState = data.state;
+                    if (this.freeTaskState === 1) {
+                        this.freeTaskDuration = data.duration;
+                        this.freeTaskType = data.type;
+                    }
+                    else if (this.freeTaskState === 2) {
+                        this.freeTaskDuration = data.duration;
+                        this.freeTaskType = data.type;
+                        this.getFreeTaskResult();
+                    }
                 });
         },
 
 
 
+        // 5. 停止执行自由任务
+        // /stop_free_task/{source}
 
+        stopFreeTask() {
 
+            // for test
+            // this.freeTaskState = 0;
+            // this.freeTaskDuration = null;
+            // return;
 
+            fetch('/api/stop_free_task/' + this.selectedDataSource)
+                .then(response => response.json())
+                .then(data => {
+                    if (!data) {
+                        return;
+                    }
+                    console.log(data);
+                    freeTaskState = 0;
+                    freeTaskDuration = null;
+                });
+        },
 
+        // 6. 获取自由任务结果
+        // /free_task_result/{source}
+        // 后端返回json格式
+        // return {
+        //    'state': 0/1, (是否有结果)
+        //     'task_info':[
+        //         {'name': "min", 'value': 20},
+        //         {'name': "max", 'value': 30},
+        //         {'name': "mean", 'value': 25},
+        //         {'name': "std", 'value': 2},
+        //         {'name': "median", 'value': 25},
+        //         {'name': "percentile", 'value': 25}
+        //     ],
+        //     'delay':[0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0],
+        //     'start_time': '2021-01-01 00:00:00',
+        //     'end_time': '2021-01-01 00:00:10'
+        // }
+
+        // 点击开始任务 清空结果展示
+
+        getFreeTaskResult() {
+            // for test
+            // this.freeTaskState = 2;
+            // this.freeTaskResult = {
+            //     'state': 1,
+            //     'task_info': [
+            //         { name: "min", value: 20 },
+            //         { name: "max", value: 30 },
+            //         { name: "mean", value: 25 },
+            //         { name: "std", value: 2 },
+            //         { name: "median", value: 25 },
+            //         { name: "percentile", value: 25 }
+            //     ],
+            //     'delay': [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0],
+            //     'start_time': '2021-01-01 00:00:00',
+            //     'end_time': '2021-01-01 00:01:10'
+            // };
+            // return;
+
+            fetch('/api/free_task_result/' + this.selectedDataSource)
+                .then(response => response.json())
+                .then(data => {
+                    console.log('getFreeTaskResult');
+                    console.log(data);
+                    if (!data) {
+                        return;
+                    }
+                    console.log(data);
+                    if (data.state === 2) {
+                        this.freeTaskState = 2;
+                        this.freeTaskResult = data;
+                    }
+                });
+        },
         // 下载文件
         exportTaskLog() {
             console.log('exportTaskLog');
@@ -535,12 +695,46 @@ export default {
 
         },
 
+        // 处理子组件发出的更新自由任务状态的事件
+        handleStateUpdate(newState) {
+            console.log('handleStateUpdate');
+            console.log(newState);
+            const oldState = this.freeTaskState;
+            console.log(oldState);
+            // 更新状态
+            this.freeTaskState = newState;
+            // 如果是0，清空结果展示，并向后端取消任务
+            if (newState === 0) {
+                this.freeTaskResult = null;
+                // 如果任务在进行中，或者已经完成，都向后端取消任务
+                if(oldState == 1 || oldState == 2){
+                    this.stopFreeTask();
+                }
+            }
+            if(newState === 1){
+                setInterval(() => {
+                    this.getFreeTaskState();
+                }, 5000);
+            }
+        },
+
+        // 处理子组件发出的更新任务持续时间的事件
+        handleDurationUpdate(newDuration) {
+            console.log('handleDurationUpdate');
+            console.log(newDuration);
+            this.freeTaskDuration = newDuration;
+        },
+        handleTypeUpdate(newType) {
+            console.log('handleTypeUpdate');
+            console.log(newType);
+            this.freeTaskType = newType;
+        },
     },
     mounted() {
         // this.generateRandomJPG();
         // this.generateRandomGraphData();
         // setInterval(() => {
-        //     this.generateRandomJPG();
+        //     this.generateRandomJPG();  
         //     this.generateRandomGraphData();          
         // }, 5000);
 
@@ -572,12 +766,20 @@ export default {
                 this.delayData = this.bufferedTaskCache[newVal];
                 this.visualizeData = this.bufferedTaskCache[newVal];
 
-
-
+                // 切换数据源时，需要重新获取当前数据源对应的free状态
+                // 如果状态为2，会在内部调用getFreeTaskResult
+                this.getFreeTaskState();
 
             }
         },
 
+        // test
+        freeTaskDuration: function (newVal, oldVal) {
+            if (newVal !== oldVal) {
+                console.log('freeTaskDuration changed');
+                console.log(newVal);
+            }
+        }
     },
     computed: {
         filteredVisualizeData() {
@@ -614,7 +816,41 @@ export default {
                 }
             });
         },
+        filteredFreeResultData() {
+            // test
+            // return [
+            //     { name: "min", value: 20 },
+            //     { name: "max", value: 30 },
+            //     { name: "mean", value: 25 },
+            //     { name: "std", value: 2 },
+            //     { name: "median", value: 25 },
+            //     { name: "percentile", value: 25 }
+            // ];
 
+            if (!this.freeTaskResult) {
+                return null;
+            }
+            return this.freeTaskResult.task_info;
+        },
+        filteredFreeDelayData() {
+            // test
+            // return {
+            //     delay: [0.1, 0.2, 0.7, 0.4, 0.3, 0.6, 0.2, 0.8, 0.5, 0.4,
+            //         0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0],
+            //     start_time: '2021-01-01 00:00:00',
+            //     end_time: '2021-01-01 00:01:10'
+            // };
+
+            if (!this.freeTaskResult) {
+                return null;
+            }
+            return {
+                delay: this.freeTaskResult.delay,
+                start_time: this.freeTaskResult.start_time,
+                end_time: this.freeTaskResult.end_time
+            };
+
+        }
     }
 };
 

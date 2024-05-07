@@ -102,3 +102,8 @@ watch(
 	}
 );
 </script>
+<style lang="scss">
+body {
+    font-family: '宋体', 'Microsoft YaHei', sans-serif; /* 设置全局字体为宋体，也可以添加其他备选字体 */
+}
+</style>

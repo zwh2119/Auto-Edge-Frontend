@@ -18,23 +18,6 @@
                 </div>
             </el-col>
         </el-row> -->
-        <el-row :gutter="15" class="home-card-two mb15 toggleSource">
-            <el-col :xs="24" :sm="24" :md="24" :lg="24" :xl="24">
-                <div class="home-card-item">
-                    <div style="height: 100%">
-                        <div class="flex-margin flex w100">
-                            <div class="flex-auto">
-                                选择节点: &nbsp; &nbsp; &nbsp;
-                                <el-select v-model="selectedNode" placeholder="请选择...">
-                                    <el-option v-for="item in node" :key="item" :label="item" :value="item">
-                                    </el-option>
-                                </el-select>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </el-col>
-        </el-row>
         <el-row :gutter="15" class="home-card-two mb15 pri-graph">
             <el-col :xs="24" :sm="24" :md="24" :lg="24" :xl="24">
                 <div class="home-card-item">
@@ -42,8 +25,7 @@
                         <div class="flex-margin flex w100">
                             <div class="flex-auto">
                                 <!-- <PriorityAnimation :data="priorityData" /> -->
-                                <PriorityView :priority_num="priority_num" :stage="stage"
-                                    :queue_result="queue_result" />
+                                <PriorityView :priority_num="priority_num" :stage="stage" :queue_result="queue_result"/>
                             </div>
                         </div>
                     </div>
@@ -62,7 +44,7 @@ export default {
         PriorityView
     },
     mounted() {
-
+        
         this.getPipelineInfo();
         this.getLatestPriorityData();
         setInterval(this.getLatestPriorityData, 1000);
@@ -72,57 +54,45 @@ export default {
         return {
             priority_num: null,
             stage: [],
-            node: [],
             queue_result: null,
-            selectedNode: null,
         }
     },
     methods: {
-        //  获取流水线信息
-        // "/pipeline_info"
-        // 后端返回json格式
-        // {
-        //     'priority_num': 10,
-        //     'stage': [stage_name1,stage_name2],
-        //      'node': [node_name1,node_name2]
-        // }
+            //  获取流水线信息
+            // "/pipeline_info"
+            // 后端返回json格式
+            // {
+            //     'priority_num': 10,
+            //     'stage': [stage_name1,stage_name2]
+            // }
+    
 
-
-
-        getPipelineInfo() {
+            
+        getPipelineInfo() { 
             fetch('/api/pipeline_info')
                 .then(response => response.json())
                 .then(data => {
                     console.log(data);
                     this.priority_num = data.priority_num;
-                    this.stage = data.stage;
-                    this.node = data.node;
+                    this.stage = data.stage;                    
                 });
         },
 
 
-        // 3. 获取最新数据
-        // /queue_result
-        // 后端返回json格式
+            // 3. 获取最新数据
+             // /queue_result
+            // 后端返回json格式
 
-        getLatestPriorityData() {
-            if(!this.selectedNode){
-                return;
-            }
-            fetch('/api/queue_result/' + this.selectedNode)
+        getLatestPriorityData() { 
+            fetch('/api/queue_result')
                 .then(response => response.json())
                 .then(data => {
                     console.log(data);
                     this.queue_result = data;
                 });
         },
-
+       
     },
-    watch: {
-        selectedNode: function (newVal, oldVal) {
-            this.getLatestPriorityData();
-        }
-    }
 }
 </script>
 
@@ -246,3 +216,5 @@ $homeNavLengh: 8;
     }
 }
 </style>
+
+

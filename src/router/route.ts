@@ -107,21 +107,6 @@ export const dynamicRoutes: Array<RouteRecordRaw> = [
 					icon: 'iconfont icon-shuju',
 				},
 			},
-			{
-				path: '/priority',
-				name: 'priority',
-				component: () => import('/@/views/priority/index.vue'),
-				meta: {
-					title: 'message.router.priority',
-					isLink: '',
-					isHide: false,
-					isKeepAlive: true,
-					isAffix: false,
-					isIframe: false,
-					roles: ['admin', 'common'],
-					icon: 'iconfont icon-crew_feature',
-				},
-			},
 		],
 	},
 ];

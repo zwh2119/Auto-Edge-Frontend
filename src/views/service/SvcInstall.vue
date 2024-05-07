@@ -32,7 +32,7 @@
                     :value="item.image_name + '&' + item.url"
                 ></el-option>
             </el-select>
-            <p v-if="stage.selected" style="margin-top: 10px; font-size: 14px;">仓库url:{{ stage.selected.split('&')[1]  }}</p>
+            <p v-if="stage.selected" style="margin-top: 10px; font-size: 14px;">{{ stage.selected.split('&')[1]  }}</p>
             <el-divider v-if="index < selectedImages.length - 1"></el-divider>
             <!-- {{ stage.selected }} -->
         </div>
@@ -49,7 +49,7 @@
       </form>
   </template>
 
-  <script>
+<script>
   import { ElButton } from "element-plus";
   import { ElMessage } from "element-plus";
 
@@ -77,25 +77,11 @@
       const install_state = useInstallStateStore();
       const installed = ref(null);
       const detectionOptions = ref(null);
-
-      watch(() => install_state.status, (newValue, oldValue) => {
-        installed.value = newValue;
-        // console.log(installed.value);
-      });
-      
-      onMounted(async () => {
-        // console.log("mount")
+      const getTask = async () => {
         try {
           const response = await axios.get('/api/task');
           if (response.data !== null) {
-            // console.log(response.data)
-            // detectionOptions.value = response.data.map((item) => {
-            //   const key = Object.keys(item)[0];
-            //   const value = item[key];
-            //   return { chineseLabel: value, englishLabel: key };
-            // });
             detectionOptions.value = response.data;
-            console.log(detectionOptions.value);
           }
         } catch (error) {
           console.error('Failed to fetch detection options', error);
@@ -110,16 +96,24 @@
           }else{
             install_state.uninstall();
           }
-          // console.log(installed.value);
         } catch (error) {
           console.error("query state error");
         }
+      }
+
+      watch(() => install_state.status, (newValue, oldValue) => {
+        installed.value = newValue;
+      });
+      
+      onMounted(async () => {
+        getTask();
       });
 
       return {
         installed,
         install_state,
-        detectionOptions
+        detectionOptions,
+        getTask
       };
     },
     methods: {
@@ -216,7 +210,7 @@
       
     },
   };
-  </script>
+</script>
   
   <style scoped>
   body {
