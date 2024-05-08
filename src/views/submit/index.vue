@@ -173,15 +173,8 @@ export default {
     // 提交任务
     submitTask() {
       // 检查所有字段是否都已填写
-      if (!this.selected_label || !this.delay_constraint || !this.acc_constraint || !this.urgency || !this.importance) {
-        ElMessage.error('请选择数据流并且填写所有字段');
-        return;
-      }
-      // 检查紧急程度和重要程度之和是否等于1
-      const urgencyValue = parseFloat(this.urgency);
-      const importanceValue = parseFloat(this.importance);
-      if (isNaN(urgencyValue) || isNaN(importanceValue) || urgencyValue + importanceValue !== 1) {
-        ElMessage.error('紧急程度 + 重要程度需要等于1');
+      if (!this.selected_label ) {
+        ElMessage.error('请选择数据流');
         return;
       }
 
@@ -189,10 +182,6 @@ export default {
 
       const content = {
         'source_label': this.selected_label,
-        'delay_cons': this.delay_constraint,
-        'acc_cons': this.acc_constraint,
-        'urgency': this.urgency,
-        'importance': this.importance
       }
       const task_info = JSON.stringify(content);
       fetch('/api/query/submit_query', {
