@@ -92,6 +92,22 @@ export const dynamicRoutes: Array<RouteRecordRaw> = [
 					icon: 'iconfont icon-zidingyibuju',
 				},
 			},
+			// {
+			// 	path: '/result',
+			// 	name: 'result',
+			// 	component: () => import('/@/views/result/index.vue'),
+			// 	meta: {
+			// 		title: 'message.router.result',
+			// 		isLink: '',
+			// 		isHide: false,
+			// 		isKeepAlive: true,
+			// 		isAffix: false,
+			// 		isIframe: false,
+			// 		roles: ['admin', 'common'],
+			// 		icon: 'iconfont icon-ico_shuju',
+			// 	},
+			// }
+			// ,
 			{
 				path: '/modal',
 				name: 'modal',

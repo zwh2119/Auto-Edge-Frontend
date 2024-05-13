@@ -3,7 +3,7 @@
         <h3>周期任务结果{{ prompt_title }}</h3>
     </div>
 
-    <div id="line-chart" style="width: 24vw; height: 32vh;"></div>
+    <div id="line-chart-result" style="width: 24vw; height: 32vh;"></div>
     <br>
     <div>
         <div style="text-align: center; font-size: medium;">
@@ -48,7 +48,7 @@ export default {
     },
     mounted() {
         // 初始化echarts实例
-        this.chart = echarts.init(document.getElementById('line-chart'));
+        this.chart = echarts.init(document.getElementById('line-chart-result'));
         // 调用加载数据的方法
         this.loadData();
         // 定时更新数据
