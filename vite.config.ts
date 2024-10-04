@@ -40,11 +40,6 @@ const viteConfig = defineConfig((mode: ConfigEnv) => {
 					changeOrigin: true,
 					rewrite: path => path.replace(/^\/api/, '')
 				},
-				'/distributor': {
-					target: "http://114.212.81.11:39500",
-					changeOrigin: true,
-					rewrite: path => path.replace(/^\/distributor/, '')
-				},
 			},
 		},
 		build: {
