@@ -1,14 +1,16 @@
 // 定义内容
 export default {
 	router: {
-		home: '首页',
+		home: 'Home',
 		start: '服务启动',
-		install:'服务安装',
+		install:'Application Installation',
 		info: '系统详情',
 		result: '结果查看',
 		submit:'提交任务',
+		pipeline: 'Pipeline Orchestration',
+		datasource: 'Source Configuration',
 		priority:'优先级队列',
-		modal:'结果展示'
+		modal:'Result Display'
 	},
 	staticRoutes: {
 		signIn: '登录',
@@ -26,12 +28,12 @@ export default {
 		dropdownLarge: '大型',
 		dropdownDefault: '默认',
 		dropdownSmall: '小型',
-		dropdown1: '首页',
+		dropdown1: 'Home',
 		dropdown2: '个人中心',
 		dropdown3: '404',
 		dropdown4: '401',
-		dropdown5: '退出登录',
-		dropdown6: '代码仓库',
+		dropdown5: 'Logout',
+		dropdown6: 'Repository',
 		searchPlaceholder: '菜单搜索：支持中文、路由路径',
 		newTitle: '通知',
 		newBtn: '全部已读',

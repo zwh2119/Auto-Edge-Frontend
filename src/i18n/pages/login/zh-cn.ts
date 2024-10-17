@@ -1,7 +1,7 @@
 // 定义内容
 export default {
 	label: {
-		one1: '用户名登录',
+		one1: 'System Information',
 		two2: '手机号登录',
 	},
 	link: {

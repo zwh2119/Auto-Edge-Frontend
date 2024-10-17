@@ -4,69 +4,67 @@
 
       <!-- 选择视频流 -->
       <!-- <el-card shadow="hover" style="margin: 20px;display: flex;justify-content: center;"> -->
-      <el-card shadow="hover" style="margin: 20px;">
+      <div style="margin: 20px;">
         <div style="display: flex; align-items: center;">
-          <h3>数据流</h3>
-          <input type="file" ref="fileInput" style="width: 300px; margin-left: 20px;"/>
+          <h3>Data Source</h3>
+
+          <input type="file" ref="fileInput" style="width: 400px; margin-left: 20px;"/>
           <!-- <button @click="uploadFile">上传文件</button> -->
-          <el-button plain @click="uploadFile" style="margin-left: 20px;">上传文件</el-button>
+          <el-button plain @click="uploadFile" style="margin-left: 20px;margin-bottom: 8px">Upload File</el-button>
         </div>
+        <div><br/><br/></div>
 
 
         <!-- 显示视频流 -->
-        <div style="display: flex;height: 300px;overflow-y: scroll;justify-content: center;">
+        <div style="display: flex;height: 500px;overflow-y: scroll;justify-content: center;">
           <div v-for="item in info" style="display: inline-block;">
             <div class="available-node"
                  v-on:click="selectItem({ key:item })"
                  v-bind:class="{ 'selected': selected_label === item.source_label }"
             >
               <ul style="list-style-type: none;font-size: 16px;" class="info-ui">
-                <li class="info-li">数据流类型: {{ item.source_type }}</li>
-                <li class="info-li">数据流名称: {{ item.source_name }}</li>
-                <li class="info-li">数据流列表:</li>
-                <div class="info-li" v-for="camera in item.camera_list" style="display: flex;justify-content: center;">
+                <li class="info-li">Source Name: {{ item.source_name }}</li>
+                <li class="info-li">Source Type: {{ item.source_type }}</li>
+                <li class="info-li">Source Mode: {{ item.source_mode }}</li>
+                <li class="info-li">Source List:</li>
+                <div class="info-li" v-for="camera in item.source_list" style="display: flex; justify-content: center;">
                   <div style="width: 100%; display: flex; align-items: center;">
-                    <!-- <p style="visibility: hidden;">数据流列表:</p> -->
                     <div style="margin-right: 10px;">{{ camera.name }}</div>
-                    <el-tooltip
-                        class="box-item"
-                        effect="dark"
-                        placement="right"
-                        :hide-after="10"
-                        popper-class="tooltip-width"
-                    >
+                    <el-tooltip class="box-item" effect="dark" placement="right" :hide-after="10"
+                                popper-class="tooltip-width">
                       <template #content>
-                        推流地址:{{ camera.url }}<br/>
-                        简要描述:{{ camera.describe }}<br/>
-                        <div v-if="camera.resolution">分辨率:{{ camera.resolution }}</div>
-                        <div v-if="camera.fps">帧率:{{ camera.fps }}</div>
+                        Source URL: {{ camera.url }}<br/>
+                        <div v-if="camera.resolution">Resolution: {{ camera.resolution }}</div>
+                        <div v-if="camera.fps">FPS: {{ camera.fps }}</div>
                       </template>
-                      <el-button
-                          type=""
-                          text
-                      >查看详情
-                      </el-button
-                      >
+                      <el-button type="" text>details</el-button>
                     </el-tooltip>
                   </div>
+
                 </div>
 
               </ul>
+              <div style="text-align: center; margin-top: 20px;">
+                <el-button type="danger"  :loading="loading" @click="delete_source(item.source_label)"
+                >Delete
+                </el-button>
+              </div>
             </div>
           </div>
         </div>
 
         <div style="display: flex; justify-content: center;margin-top: 20px;">
-          <el-button type="primary" :disabled="state==='open' || selected_label === null" :loading="loading"
-                     @click="submitTask">开启数据流
+          <el-button type="primary" :disabled="state!=='close' || selected_label === null" :loading="loading"
+                     @click="submit_query">Open Datasource
           </el-button>
-          <el-button type="danger" :disabled="state!=='open' || selected_label !== source_label" :loading="kill_loading"
-                     @click="stop_query">关闭数据流
+          <el-button type="danger" :disabled="state==='close' || selected_label !== source_label"
+                     :loading="kill_loading"
+                     @click="stop_query">Close Datasource
           </el-button>
         </div>
 
 
-      </el-card>
+      </div>
 
     </div>
   </div>
@@ -96,6 +94,7 @@ export default {
     };
   },
   methods: {
+
     showMsg(state, msg) {
       if (state === 'success') {
         ElMessage({
@@ -114,7 +113,7 @@ export default {
       }
     },
     handleError(error) {
-      ElMessage.error("出错了,请联系管理员")
+      ElMessage.error("System Error")
       console.log(error);
     },
     uploadFile() {
@@ -127,7 +126,7 @@ export default {
         // 将文件添加到FormData对象中
         formData.append('file', fileInput.files[0]);
 
-        const url = '/api/datasource_config';
+        const url = '/api/datasource';
 
         // 发送POST请求
         fetch(url, {
@@ -145,13 +144,14 @@ export default {
               this.handleError(error)
             });
       } else {
-        ElMessage.error("请选择文件")
+        ElMessage.error("Please choose the file")
       }
     },
 
+
     // 获取视频流信息
     getInfo() {
-      fetch("/api/node/get_video_info")
+      fetch("/api/datasource")
           .then((response) => response.json())
           .then((data) => {
             // console.log(data);
@@ -170,11 +170,12 @@ export default {
       // console.log(this.source_label);
     },
 
+
     // 提交任务
-    submitTask() {
+    submit_query() {
       // 检查所有字段是否都已填写
-      if (!this.selected_label ) {
-        ElMessage.error('请选择数据流');
+      if (!this.selected_label) {
+        ElMessage.error('Please choose datasource');
         return;
       }
 
@@ -184,7 +185,7 @@ export default {
         'source_label': this.selected_label,
       }
       const task_info = JSON.stringify(content);
-      fetch('/api/query/submit_query', {
+      fetch('/api/submit_query', {
         method: 'POST',
         body: task_info
       }).then((response) => response.json())
@@ -194,7 +195,7 @@ export default {
             this.loading = false;
             if (state === 'success') {
               this.state = 'open';
-              msg += ',页面即将刷新'
+              msg += '. Refreshing..'
               setTimeout(() => {
                 location.reload();
               }, 3000);
@@ -207,6 +208,7 @@ export default {
       })
     },
 
+
     query_state() {
       fetch('/api/query_state').then((response) => response.json())
           .then(data => {
@@ -217,6 +219,7 @@ export default {
             // console.log("query:" + this.selected_label)
           })
     },
+
     stop_query() {
       this.kill_loading = true;
       const content = {
@@ -245,7 +248,31 @@ export default {
         // console.log('submit task fail');
         this.handleError(error)
       })
-    }
+    },
+
+    delete_source(source_label) {
+      console.log(source_label);
+      const content = {
+        'source_label': source_label
+      }
+      fetch('/api/datasource', {
+        method: 'DELETE',
+        body: JSON.stringify(content)
+      }).then(response => response.json())
+          .then(data => {
+            const state = data['state']
+            let msg = data['msg']
+            msg += '. Refreshing..'
+            this.showMsg(state, msg);
+            setTimeout(() => {
+              location.reload()
+            }, 1000);
+          }).catch(error => {
+        ElMessage.error("System Error")
+        console.log(error);
+      })
+    },
+
   },
   mounted() {
 
@@ -276,7 +303,8 @@ export default {
   width: max-content;
   border: 1px solid #5c5858;
   border-radius: 10px;
-  height: 220px;
+  /* height: 220px;  移除这行 */
+  padding: 10px; /* 添加内边距 */
 }
 
 .info-li {
@@ -377,5 +405,23 @@ input[type="file"] {
   margin-left: 0;
 
 }
+
+.custom-file-input {
+  display: inline-block;
+  padding: 8px 12px;
+  cursor: pointer;
+  background-color: #f2f2f2;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  color: #333;
+  margin-right: 10px;
+  font-size: 16px;
+  transition: background-color 0.3s ease;
+}
+
+.custom-file-input:hover {
+  background-color: #e1e1e1;
+}
+
 
 </style>

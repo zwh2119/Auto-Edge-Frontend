@@ -1,7 +1,7 @@
 <template>
   <div class="outline">
     <div>
-      <h3>已安装服务容器</h3>
+      <h3>Installed Services</h3>
     </div>
     <ul style="list-style-type: none" class="svc-container">
       <li v-for="(service, index) in services" :key="index" class="svc-item">
@@ -12,19 +12,19 @@
     </ul>
     <br>
     <div>
-      <h3>当前服务详情<span style="visibility: hidden;">间隔</span> <el-button @click="refresh()">刷新</el-button></h3>
+      <h3>Current Service Details<span style="visibility: hidden;">LL</span> <el-button @click="refresh()">Refresh</el-button></h3>
     </div>
 
     <div class="table-container">
       <table>
         <thead>
           <tr>
-            <th>ip地址</th>
-            <th>主机名</th>
-            <th>CPU使用率</th>
-            <th>内存使用率</th>
-            <th>带宽</th>
-            <th>创建时间</th>
+            <th>IP Address</th>
+            <th>Hostname</th>
+            <th>CPU Usage</th>
+            <th>Memory Usage</th>
+            <th>Bandwidth</th>
+            <th>Creation Time</th>
           </tr>
         </thead>
         <tbody>
@@ -40,7 +40,7 @@
       </table>
     </div>
     <div style="text-align: right; margin-top: 20px;">
-      <el-button type="danger" @click="stopService" :loading="loading" :disabled="installed !== 'install'">停止容器运行</el-button>
+      <el-button type="danger" @click="stopService" :loading="loading" :disabled="installed !== 'install'" >Stop Services</el-button>
     </div>
   </div>
 </template>
@@ -80,7 +80,7 @@ export default {
           install_state.uninstall();
         }
       }).catch(error=>{
-        ElMessage.error("出错了,请联系管理员",3000);
+        ElMessage.error("System Error",3000);
       })
     }, 1000);
     return {
@@ -104,7 +104,7 @@ export default {
             install_state.uninstall();
             // this.installed = 'install';
             // console.log(this.install_state.status);
-            msg += ",即将刷新页面"
+            msg += ". Refreshing"
             ElMessage({
               message: msg,
               showClose: true,
@@ -125,7 +125,7 @@ export default {
         }).catch((error) => {
           loading.value = false;
           console.error(error);
-          ElMessage.error("网络故障,上传失败",3000);
+          ElMessage.error("Network Error",3000);
         });
         // console.log(install_state.status);
       }
@@ -134,12 +134,12 @@ export default {
   methods: {
     async getServiceList() {
       try {
-        const response = await fetch("/api/get_service_list");
+        const response = await fetch("/api/installed_service");
         const data = await response.json();
         this.services = data;
       } catch (error) {
         // console.error("请求失败:", error);
-        ElMessage.error("请求失败，请稍后再试");
+        ElMessage.error("System Error");
       }
       
     },
@@ -150,12 +150,12 @@ export default {
     async sendRequest(service) {
       try {
         this.selected_service = service
-        const response = await fetch(`/api/get_execute_url/${service}`);
+        const response = await fetch(`/api/service_info/${service}`);
         const data = await response.json();
         this.urlData = data;
       } catch (error) {
         // console.error("请求失败:", error);
-        ElMessage.error("请求失败，请联系管理员");
+        ElMessage.error("System Error");
       }
     },
     

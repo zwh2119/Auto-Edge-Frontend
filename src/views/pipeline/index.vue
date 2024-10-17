@@ -15,51 +15,22 @@
         </div>
       </el-col>
     </el-row>
-    <el-row :gutter="15" class="home-card-two mb15">
-      <el-col :xs="24" :sm="24" :md="8" :lg="8" :xl="8">
-        <div class="home-card-item">
-          <div style="height: 100%">
-            <div class="flex-margin flex w100">
-              <div class="flex-auto">
-                <SvcInstall/>
-              </div>
-            </div>
-          </div>
-        </div>
-      </el-col>
-      <el-col :xs="24" :sm="24" :md="16" :lg="16" :xl="16">
-        <div class="home-card-item">
-          <div style="height: 100%">
-            <div class="flex-margin flex w100">
-              <div class="flex-auto">
-                <SvcQuery/>
-              </div>
-            </div>
-          </div>
-        </div>
-      </el-col>
-    </el-row>
 
   </div>
 </template>
 
 <script>
-import SvcInstall from './SvcInstall.vue'
-import SvcQuery from './SvcQuery.vue'
+
 import DagManage from './DagManage.vue'
-import {reactive} from 'vue'
-import axios from 'axios';
+
 
 export default {
   components: {
-    SvcInstall,
-    SvcQuery,
-    DagManage
+
+    DagManage,
   },
   data() {
     return {
-      installed: null,
-      detectionOptions: [],
     }
   },
 }
@@ -79,9 +50,9 @@ $homeNavLengh: 8;
     .home-card-item {
       width: 100%;
       height: 150px;
-      border-radius: 4px;
+      border-radius: 2px;
       transition: all ease 0.3s;
-      padding: 20px;
+      padding: 5px;
       overflow: hidden;
       background: var(--el-color-white);
       color: var(--el-text-color-primary);
@@ -126,7 +97,7 @@ $homeNavLengh: 8;
   .home-card-two,
   .home-card-three {
     .home-card-item {
-      height: 120vh;
+      height: 90vh;
       width: 100%;
       overflow: scroll;
 
@@ -168,6 +139,8 @@ $homeNavLengh: 8;
     }
 
   }
+
+
 
   .dag-manage {
     .home-card-item {

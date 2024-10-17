@@ -1,4 +1,4 @@
-import { RouteRecordRaw } from 'vue-router';
+import {RouteRecordRaw} from 'vue-router';
 
 /**
  * 建议：路由 path 路径与文件夹名称相同，找文件可浏览器地址找，方便定位文件位置
@@ -18,16 +18,16 @@ import { RouteRecordRaw } from 'vue-router';
 
 // 扩展 RouteMeta 接口
 declare module 'vue-router' {
-	interface RouteMeta {
-		title?: string;
-		isLink?: string;
-		isHide?: boolean;
-		isKeepAlive?: boolean;
-		isAffix?: boolean;
-		isIframe?: boolean;
-		roles?: string[];
-		icon?: string;
-	}
+    interface RouteMeta {
+        title?: string;
+        isLink?: string;
+        isHide?: boolean;
+        isKeepAlive?: boolean;
+        isAffix?: boolean;
+        isIframe?: boolean;
+        roles?: string[];
+        icon?: string;
+    }
 }
 
 /**
@@ -38,93 +38,124 @@ declare module 'vue-router' {
  * @returns 返回路由菜单数据
  */
 export const dynamicRoutes: Array<RouteRecordRaw> = [
-	{
-		path: '/',
-		name: '/',
-		component: () => import('/@/layout/index.vue'),
-		redirect: '/install',
-		meta: {
-			isKeepAlive: true,
-		},
-		children: [
-			{
-				path: '/home',
-				name: 'home',
-				component: () => import('/@/views/home/index.vue'),
-				meta: {
-					title: 'message.router.home',
-					isLink: '',
-					isHide: false,
-					isKeepAlive: true,
-					isAffix: true,
-					isIframe: false,
-					roles: ['admin', 'common'],
-					icon: 'iconfont icon-shouye',
-				},
-			},
-			{
-				path: '/install',
-				name: 'install',
-				component: () => import('/@/views/service/index.vue'),
-				meta: {
-					title: 'message.router.install',
-					isLink: '',
-					isHide: false,
-					isKeepAlive: true,
-					isAffix: false,
-					isIframe: false,
-					roles: ['admin', 'common'],
-					icon: 'iconfont icon-xingqiu',
-				},
-			},
-			{
-				path: '/submit',
-				name: 'submit',
-				component: () => import('/@/views/submit/index.vue'),
-				meta: {
-					title: 'message.router.submit',
-					isLink: '',
-					isHide: false,
-					isKeepAlive: true,
-					isAffix: false,
-					isIframe: false,
-					roles: ['admin', 'common'],
-					icon: 'iconfont icon-zidingyibuju',
-				},
-			},
-			// {
-			// 	path: '/result',
-			// 	name: 'result',
-			// 	component: () => import('/@/views/result/index.vue'),
-			// 	meta: {
-			// 		title: 'message.router.result',
-			// 		isLink: '',
-			// 		isHide: false,
-			// 		isKeepAlive: true,
-			// 		isAffix: false,
-			// 		isIframe: false,
-			// 		roles: ['admin', 'common'],
-			// 		icon: 'iconfont icon-ico_shuju',
-			// 	},
-			// }
-			// ,
-			{
-				path: '/modal',
-				name: 'modal',
-				component: () => import('/@/views/modal/index.vue'),
-				meta: {
-					title: 'message.router.modal',
-					isLink: '',
-					isHide: false,
-					isKeepAlive: true,
-					isAffix: false,
-					isIframe: false,
-					roles: ['admin', 'common'],
-					icon: 'iconfont icon-shuju',
-				},
-			},
-		],
-	},
+    {
+        path: '/',
+        name: '/',
+        component: () => import('/@/layout/index.vue'),
+        redirect: '/pipeline',
+        meta: {
+            isKeepAlive: true,
+        },
+        children: [
+            {
+                path: '/home',
+                name: 'home',
+                component: () => import('/@/views/home/index.vue'),
+                meta: {
+                    title: 'message.router.home',
+                    isLink: '',
+                    isHide: false,
+                    isKeepAlive: true,
+                    isAffix: true,
+                    isIframe: false,
+                    roles: ['admin', 'common'],
+                    icon: 'iconfont icon-shouye',
+                },
+            },
+            {
+                path: '/pipeline',
+                name: 'pipeline',
+                component: () => import('/@/views/pipeline/index.vue'),
+                meta: {
+                    title: 'message.router.pipeline',
+                    isLink: '',
+                    isHide: false,
+                    isKeepAlive: true,
+                    isAffix: false,
+                    isIframe: false,
+                    roles: ['admin', 'common'],
+                    icon: 'iconfont icon-zidingyibuju',
+                },
+            },
+            {
+                path: '/datasource',
+                name: 'datasource',
+                component: () => import('/@/views/datasource/index.vue'),
+                meta: {
+                    title: 'message.router.datasource',
+                    isLink: '',
+                    isHide: false,
+                    isKeepAlive: true,
+                    isAffix: false,
+                    isIframe: false,
+                    roles: ['admin', 'common'],
+                    icon: 'iconfont icon-zhongduancanshu',
+                },
+            },
+            {
+                path: '/install',
+                name: 'install',
+                component: () => import('/@/views/install/index.vue'),
+                meta: {
+                    title: 'message.router.install',
+                    isLink: '',
+                    isHide: false,
+                    isKeepAlive: true,
+                    isAffix: false,
+                    isIframe: false,
+                    roles: ['admin', 'common'],
+                    icon: 'iconfont icon-xingqiu',
+                },
+            },
+
+            // {
+            // 	path: '/submit',
+            // 	name: 'submit',
+            // 	component: () => import('/@/views/submit/index.vue'),
+            // 	meta: {
+            // 		title: 'message.router.submit',
+            // 		isLink: '',
+            // 		isHide: false,
+            // 		isKeepAlive: true,
+            // 		isAffix: false,
+            // 		isIframe: false,
+            // 		roles: ['admin', 'common'],
+            // 		icon: 'iconfont icon-zidingyibuju',
+            // 	},
+            // },
+            // {
+            // 	path: '/result',
+            // 	name: 'result',
+            // 	component: () => import('/@/views/result/index.vue'),
+            // 	meta: {
+            // 		title: 'message.router.result',
+            // 		isLink: '',
+            // 		isHide: false,
+            // 		isKeepAlive: true,
+            // 		isAffix: false,
+            // 		isIframe: false,
+            // 		roles: ['admin', 'common'],
+            // 		icon: 'iconfont icon-ico_shuju',
+            // 	},
+            // }
+            // ,
+            {
+                path: '/modal',
+                name: 'modal',
+                component: () => import('/@/views/modal/index.vue'),
+                meta: {
+                    title: 'message.router.modal',
+                    isLink: '',
+                    isHide: false,
+                    isKeepAlive: true,
+                    isAffix: false,
+                    isIframe: false,
+                    roles: ['admin', 'common'],
+                    icon: 'iconfont icon-shuju',
+                },
+            },
+        ],
+    },
 ];
 
 /**
@@ -132,24 +163,24 @@ export const dynamicRoutes: Array<RouteRecordRaw> = [
  * @link 参考：https://next.router.vuejs.org/zh/guide/essentials/history-mode.html#netlify
  */
 export const notFoundAndNoPower = [
-	{
-		path: '/:path(.*)*',
-		name: 'notFound',
-		component: () => import('/@/views/error/404.vue'),
-		meta: {
-			title: 'message.staticRoutes.notFound',
-			isHide: true,
-		},
-	},
-	{
-		path: '/401',
-		name: 'noPower',
-		component: () => import('/@/views/error/401.vue'),
-		meta: {
-			title: 'message.staticRoutes.noPower',
-			isHide: true,
-		},
-	},
+    {
+        path: '/:path(.*)*',
+        name: 'notFound',
+        component: () => import('/@/views/error/404.vue'),
+        meta: {
+            title: 'message.staticRoutes.notFound',
+            isHide: true,
+        },
+    },
+    {
+        path: '/401',
+        name: 'noPower',
+        component: () => import('/@/views/error/401.vue'),
+        meta: {
+            title: 'message.staticRoutes.noPower',
+            isHide: true,
+        },
+    },
 ];
 
 /**
@@ -159,13 +190,13 @@ export const notFoundAndNoPower = [
  * @returns 返回路由菜单数据
  */
 export const staticRoutes: Array<RouteRecordRaw> = [
-	{
-		path: '/login',
-		name: 'login',
-		component: () => import('/@/views/login/index.vue'),
-		meta: {
-			title: '登录',
-		},
-	},
+    {
+        path: '/login',
+        name: 'login',
+        component: () => import('/@/views/login/index.vue'),
+        meta: {
+            title: 'Login',
+        },
+    },
 
 ];
