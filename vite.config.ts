@@ -4,6 +4,7 @@ import { defineConfig, loadEnv, ConfigEnv } from 'vite';
 import vueSetupExtend from 'vite-plugin-vue-setup-extend-plus';
 import viteCompression from 'vite-plugin-compression';
 import { buildConfig } from './src/utils/build';
+import EnvironmentPlugin from 'vite-plugin-environment';
 
 const pathResolve = (dir: string) => {
 	return resolve(__dirname, '.', dir);
@@ -15,17 +16,24 @@ const alias: Record<string, string> = {
 };
 
 const viteConfig = defineConfig((mode: ConfigEnv) => {
-	const env = loadEnv(mode.mode, process.cwd());
+	// const env = loadEnv(mode.mode, process.cwd());
 	return {
-		plugins: [vue(), vueSetupExtend(), viteCompression(), JSON.parse(env.VITE_OPEN_CDN) ? buildConfig.cdn() : null],
+		plugins: [
+			vue(),
+			vueSetupExtend(),
+			viteCompression(),
+			JSON.parse(String(process.env.VITE_OPEN_CDN)) ? buildConfig.cdn() : null,
+			EnvironmentPlugin(['VITE_PORT', 'VITE_OPEN', 'VITE_OPEN_CDN', 'VITE_PUBLIC_PATH']),
+		],
 		root: process.cwd(),
 		resolve: { alias },
-		base: mode.command === 'serve' ? './' : env.VITE_PUBLIC_PATH,
+		base: mode.command === 'serve' ? './' : process.env.VITE_PUBLIC_PATH,
 		optimizeDeps: { exclude: ['vue-demi'] },
 		server: {
 			host: '0.0.0.0',
-			port: env.VITE_PORT as unknown as number,
-			open: JSON.parse(env.VITE_OPEN),
+			// port: env.VITE_PORT as unknown as number,
+			port: process.env.VITE_PORT as unknown as number,
+			open: JSON.parse(String(process.env.VITE_OPEN)),
 			hmr: true,
 			proxy: {
 				'/gitee': {
@@ -35,10 +43,10 @@ const viteConfig = defineConfig((mode: ConfigEnv) => {
 					rewrite: (path) => path.replace(/^\/gitee/, ''),
 				},
 				'/api': {
-					target: "http://114.212.81.11:8910",
+					target: 'http://114.212.81.11:8910',
 					// target: "http://127.0.0.1:5000",
 					changeOrigin: true,
-					rewrite: path => path.replace(/^\/api/, '')
+					rewrite: (path) => path.replace(/^\/api/, ''),
 				},
 			},
 		},
@@ -56,7 +64,7 @@ const viteConfig = defineConfig((mode: ConfigEnv) => {
 						}
 					},
 				},
-				...(JSON.parse(env.VITE_OPEN_CDN) ? { external: buildConfig.external } : {}),
+				...(JSON.parse(String(process.env.VITE_OPEN_CDN)) ? { external: buildConfig.external } : {}),
 			},
 		},
 		css: { preprocessorOptions: { css: { charset: false } } },
